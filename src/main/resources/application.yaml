@@ -1,0 +1,13 @@
+spring:
+  h2:
+    console:
+      enabled: true # 웹에서 DB를 눈으로 볼 수 있게 해줌!
+  datasource:
+    url: jdbc:h2:mem:testdb
+    driver-class-name: org.h2.Driver
+    username: sa
+    password:
+  jpa:
+    show-sql: true # 우리가 짠 코드가 어떤 SQL로 변하는지 보여줌!
+    hibernate:
+      ddl-auto: update # 엔티티(클래스)대로 테이블을 알아서 만들어줌!
