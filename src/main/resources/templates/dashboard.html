@@ -8,51 +8,182 @@
         body { background-color: #f4f7f6; font-family: 'Apple SD Gothic Neo', sans-serif; }
         .main-card { border-radius: 15px; border: none; box-shadow: 0 10px 30px rgba(0,0,0,0.05); }
         .btn-primary { background-color: #007aff; border: none; }
+        .summary-card { background: linear-gradient(135deg, #007aff 0%, #00c6ff 100%); color: white; border-radius: 20px; }
+        
+        /* ⏱️ 시계 모양 타이머 스타일 */
+        .timer-container { position: relative; width: 120px; height: 120px; margin: 0 auto; }
+        .timer-svg { transform: rotate(-90deg); width: 120px; height: 120px; }
+        .timer-circle-bg { fill: none; stroke: #eee; stroke-width: 8; }
+        .timer-circle-prog { 
+            fill: none; stroke: #007aff; stroke-width: 8; 
+            stroke-dasharray: 339.292; /* 2 * PI * r (r=54) */
+            stroke-dashoffset: 0;
+            transition: stroke-dashoffset 1s linear;
+        }
+        #timerDisplay { 
+            position: absolute; top: 50%; left: 50%; 
+            transform: translate(-50%, -50%); 
+            font-size: 1.5rem; font-weight: bold; color: #007aff;
+        }
     </style>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body class="py-5">
     <div class="container">
         <h2 class="text-center mb-5">🔥 6월 바디프로필 성공 기원 로그</h2>
 
-        <div class="card main-card p-4 mb-4">
-            <h5 class="mb-3 text-primary fw-bold">🏋️‍♂️ 오늘의 오운완 기록하기</h5>
-            <form action="/api/workouts/add" method="post" class="row g-2 align-items-center">
-                <div class="col-md-3">
-                    <input type="text" name="name" class="form-control" placeholder="운동 종목" required>
-                </div>
-                <div class="col-md-2">
-                    <select name="category" class="form-select">
-                        <option value="가슴">가슴</option>
-                        <option value="등">등</option>
-                        <option value="하체">하체</option>
-                        <option value="어깨">어깨</option>
-                        <option value="팔">팔</option>
-                    </select>
-                </div>
-                <div class="col-md-2"><input type="number" name="weight" class="form-control" placeholder="무게(kg)" required></div>
-                <div class="col-md-2"><input type="number" name="reps" class="form-control" placeholder="횟수(회)" required></div>
-                <div class="col-md-2"><input type="number" name="sets" class="form-control" placeholder="세트(S)" required></div>
-                <div class="col-md-1"><button type="submit" class="btn btn-primary w-100">🚀</button></div>
-            </form>
+        <div class="card main-card summary-card p-4 mb-4 text-center shadow-lg">
+            <h5 class="mb-2 opacity-75">Today's Total Volume</h5>
+            <h1 class="display-3 fw-bold mb-0">
+                <span th:text="${#numbers.formatInteger(todayTotalVolume, 0, 'COMMA')}">0</span> <small>kg</small>
+            </h1>
+            <p class="mt-2 mb-0 fw-light text-white">"오늘 흘린 땀은 배신하지 않음~!!" 🦾✨</p>
         </div>
 
-        <div class="card main-card p-4">
-            <table class="table table-hover">
-                <thead class="table-light">
-                    <tr><th>부위</th><th>종목</th><th>상세</th><th>총 볼륨</th><th>날짜</th><th>관리</th></tr>
-                </thead>
-                <tbody>
-                    <tr th:each="w : ${workouts}">
-                        <td><span class="badge bg-info text-dark" th:text="${w.category}"></span></td>
-                        <td class="fw-bold" th:text="${w.name}"></td>
-                        <td th:text="${w.weight} + 'kg x ' + ${w.reps} + '회 x ' + ${w.sets} + '세트'"></td>
-                        <td class="text-primary fw-bold" th:text="${w.totalVolume} + ' kg'"></td>
-                        <td th:text="${#temporals.format(w.createdAt, 'MM/dd HH:mm')}"></td>
-                        <td><a th:href="@{/api/workouts/delete/{id}(id=${w.id})}" class="btn btn-sm btn-outline-danger">삭제</a></td>
-                    </tr>
-                </tbody>
-            </table>
+        <div class="row mb-5">
+            <div class="col-lg-7">
+                <div class="card main-card p-4 h-100">
+                    <h5 class="mb-3 text-primary fw-bold">🏋️‍♂️ 오늘의 오운완 기록하기</h5>
+                    <form action="/api/workouts/add" method="post" class="row g-2 align-items-center">
+                        <div class="col-md-4"><input type="text" name="name" class="form-control" placeholder="운동 종목" required></div>
+                        <div class="col-md-3">
+                            <select name="category" class="form-select">
+                                <option value="가슴">가슴</option><option value="등">등</option>
+                                <option value="하체">하체</option><option value="어깨">어깨</option><option value="팔">팔</option>
+                            </select>
+                        </div>
+                        <div class="col-md-2"><input type="number" name="weight" class="form-control" placeholder="kg" min="0" required></div>
+                        <div class="col-md-2"><input type="number" name="reps" class="form-control" placeholder="회" min="0" required></div>
+                        <div class="col-md-1"><button type="submit" class="btn btn-primary w-100">🚀</button></div>
+                        <input type="hidden" name="sets" value="1">
+                    </form>
+                </div>
+            </div>
+
+            <div class="col-lg-5">
+                <div class="card main-card p-4 text-center h-100">
+                    <h5 class="mb-3 text-primary fw-bold">⏱️ 휴식 타이머</h5>
+                    <div class="timer-container mb-3">
+                        <svg class="timer-svg">
+                            <circle class="timer-circle-bg" cx="60" cy="60" r="54"></circle>
+                            <circle id="progressCircle" class="timer-circle-prog" cx="60" cy="60" r="54"></circle>
+                        </svg>
+                        <div id="timerDisplay">00:00</div>
+                    </div>
+                    <div class="input-group input-group-sm mb-3 mx-auto" style="max-width: 200px;">
+                        <input type="number" id="customSeconds" class="form-control" placeholder="초 입력" min="1">
+                        <button class="btn btn-primary" onclick="startCustomTimer()">시작</button>
+                    </div>
+                    <div class="d-flex justify-content-center gap-2">
+                        <button class="btn btn-sm btn-outline-primary" onclick="startTimer(60)">1분</button>
+                        <button class="btn btn-sm btn-outline-primary" onclick="startTimer(90)">1.5분</button>
+                        <button class="btn btn-sm btn-danger" onclick="resetTimer()">리셋</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card main-card p-4 mb-5">
+            <h5 class="mb-3 text-primary fw-bold">📈 주간 볼륨 변화 그래프</h5>
+            <canvas id="volumeChart" width="400" height="150"></canvas>
+        </div>
+
+        <div th:each="entry : ${groupedWorkouts}" class="mb-5">
+            <h3 class="mb-3">
+                <span class="badge rounded-pill" 
+                      th:classappend="${entry.key == '가슴' ? 'bg-primary' : entry.key == '등' ? 'bg-success' : 'bg-danger'}"
+                      th:text="${entry.key} + ' 운동 로그'"></span>
+            </h3>
+            <div class="card main-card p-4">
+                <table class="table table-hover">
+                    <thead class="table-light"><tr><th>종목</th><th>상세</th><th>총 볼륨</th><th>날짜</th><th>관리</th></tr></thead>
+                    <tbody>
+                        <tr th:each="w : ${entry.value}">
+                            <td class="fw-bold" th:text="${w.name}"></td>
+                            <td th:text="${w.weight} + 'kg x ' + ${w.reps} + '회'"></td>
+                            <td class="text-primary fw-bold" th:text="${#numbers.formatInteger(w.totalVolume, 0, 'COMMA')} + ' kg'"></td>
+                            <td th:text="${#temporals.format(w.createdAt, 'MM/dd HH:mm')}"></td>
+                            <td><a th:href="@{/api/workouts/delete/{id}(id=${w.id})}" class="btn btn-sm btn-outline-danger">삭제</a></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
         </div>
     </div>
+
+    <script th:inline="javascript">
+        /*<![CDATA[*/
+        const dailyData = /*[[${dailyVolumes}]]*/ {};
+        const labels = Object.keys(dailyData).sort();
+        const dataValues = labels.map(date => dailyData[date]);
+        document.addEventListener('DOMContentLoaded', function() {
+            const ctx = document.getElementById('volumeChart').getContext('2d');
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: '일일 총 볼륨 (kg)',
+                        data: dataValues,
+                        borderColor: '#007aff',
+                        backgroundColor: 'rgba(0, 122, 255, 0.1)',
+                        fill: true, tension: 0.3
+                    }]
+                }
+            });
+        });
+        /*]]>*/
+    </script>
+    <script th:inline="javascript">
+        /*<![CDATA[*/
+        // 그래프 로직 생략 (기존 유지)
+        
+        // ⏱️ 시각화 타이머 로직
+        let timerInterval;
+        let totalTime;
+        const progressCircle = document.getElementById('progressCircle');
+        const circumference = 2 * Math.PI * 54;
+
+        function startTimer(seconds) {
+            clearInterval(timerInterval);
+            totalTime = seconds;
+            let timeLeft = seconds;
+            updateTimer(timeLeft);
+
+            timerInterval = setInterval(() => {
+                timeLeft--;
+                updateTimer(timeLeft);
+                if (timeLeft <= 0) {
+                    clearInterval(timerInterval);
+                    alert("🔔 휴식 끝! 다음 세트 드가자~! 🔥");
+                    resetTimer();
+                }
+            }, 1000);
+        }
+
+        function startCustomTimer() {
+            const sec = document.getElementById('customSeconds').value;
+            if (sec > 0) startTimer(parseInt(sec));
+        }
+
+        function updateTimer(timeLeft) {
+            // 시간 텍스트 업데이트
+            const mins = Math.floor(timeLeft / 60);
+            const secs = timeLeft % 60;
+            document.getElementById('timerDisplay').innerText = 
+                `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+            
+            // 원형 바 업데이트 (시계 모양 효과) [cite: 2026-01-11]
+            const offset = circumference - (timeLeft / totalTime) * circumference;
+            progressCircle.style.strokeDashoffset = offset;
+        }
+
+        function resetTimer() {
+            clearInterval(timerInterval);
+            document.getElementById('timerDisplay').innerText = "00:00";
+            progressCircle.style.strokeDashoffset = 0;
+        }
+        /*]]>*/
+    </script>
 </body>
 </html>
