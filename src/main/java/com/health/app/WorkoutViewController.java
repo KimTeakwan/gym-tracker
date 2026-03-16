@@ -4,10 +4,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
-
 import java.time.LocalDate;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Controller
@@ -18,29 +16,35 @@ public class WorkoutViewController {
 
     @GetMapping("/dashboard")
     public String dashboard(Model model) {
-        List<Workout> allWorkouts = workoutRepository.findAll();
+        // 1. 모든 기록을 가져오되, 리스트가 비어있어도 에러 안 나게 처리! [cite: 2026-02-19]
+        List<Workout> allWorkouts = Optional.ofNullable(workoutRepository.findAll()).orElse(new ArrayList<>());
         
-        // 1. 부위별 그룹화
-        Map<String, List<Workout>> groupedWorkouts = allWorkouts.stream()
+        // 2. 날짜(createdAt)가 없는 데이터는 제외하고 계산 (NullPointerException 방지) [cite: 2026-02-19]
+        List<Workout> validWorkouts = allWorkouts.stream()
+                .filter(w -> w.getCreatedAt() != null && w.getCategory() != null)
+                .collect(Collectors.toList());
+
+        // 3. 부위별 그룹화
+        Map<String, List<Workout>> groupedWorkouts = validWorkouts.stream()
                 .collect(Collectors.groupingBy(Workout::getCategory));
         
-        // 2. 그래프용 날짜별 볼륨 계산
-        Map<String, Integer> dailyVolumes = allWorkouts.stream()
+        // 4. 그래프용 날짜별 볼륨 계산
+        Map<String, Integer> dailyVolumes = validWorkouts.stream()
                 .collect(Collectors.groupingBy(
                     w -> w.getCreatedAt().toLocalDate().toString(),
                     Collectors.summingInt(Workout::getTotalVolume)
                 ));
 
-        // 3. [신규] 오늘 하루 총 볼륨 계산! [cite: 2026-01-11, 2026-02-19]
+        // 5. 오늘 총 볼륨 (안전하게 계산)
         LocalDate today = LocalDate.now();
-        int todayTotalVolume = allWorkouts.stream()
+        int todayTotalVolume = validWorkouts.stream()
                 .filter(w -> w.getCreatedAt().toLocalDate().isEqual(today))
                 .mapToInt(Workout::getTotalVolume)
                 .sum();
                 
         model.addAttribute("groupedWorkouts", groupedWorkouts);
         model.addAttribute("dailyVolumes", dailyVolumes);
-        model.addAttribute("todayTotalVolume", todayTotalVolume); // 오늘 총 볼륨 전달!
+        model.addAttribute("todayTotalVolume", todayTotalVolume);
         
         return "dashboard";
     }
