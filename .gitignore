@@ -34,4 +34,12 @@ out/
 /.nb-gradle/
 
 ### VS Code ###
+# 🔐 여기가 우리 TiDB 비밀번호를 지켜주는 핵심 구역임!
 .vscode/
+
+### Mac OS ###
+# 🍎 맥북 M4 쓰다 보면 생기는 찌꺼기 파일들 싹 다 무시~! [cite: 2026-02-19]
+.DS_Store
+.AppleDouble
+.LSOverride
+Icon

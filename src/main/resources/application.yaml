@@ -1,20 +1,25 @@
 spring:
   datasource:
-    # 맥북 로컬 MySQL 주소임!
-    url: jdbc:mysql://localhost:3306/gym_db?serverTimezone=Asia/Seoul&characterEncoding=UTF-8
-    driver-class-name: com.mysql.cj.jdbc.Driver
-    username: root
-    password: Kk5534264@
+    url: jdbc:mysql://gateway01.ap-northeast-1.prod.aws.tidbcloud.com:4000/test?sslMode=REQUIRED
+    username: 2EBXp9bbFQWPD6t.root
+    password: ${TIDB_PASSWORD} # 환경 변수로 비밀번호 관리₩
+
+    hikari:
+      maximum-pool-size: 10 # 동시에 연결할 수 있는 최대 개수
+      connection-timeout: 30000 # 연결 시도 시간 (30초)
+      idle-timeout: 600000 # 노는 연결 유지 시간
+      max-lifetime: 1800000 # 연결의 최대 수명
 
   jpa:
     hibernate:
-      # update: 자바 코드를 보고 DB 테이블을 알아서 고쳐주거나 만들어줌!
       ddl-auto: update
-    show-sql: true # 터미널에 SQL 문이 찍히게 해서 공부하기 좋게 했음~
+    show-sql: true
     properties:
       hibernate:
-        format_sql: true
+        "[format_sql]": true
+        # 💡 [핵심 수정] 숫자 '8'을 빼고 그냥 MySQLDialect라고만 적어주면 됨! [cite: 2026-02-19]
         dialect: org.hibernate.dialect.MySQLDialect
 
   thymeleaf:
-    cache: false # 코드 고치고 새로고침하면 바로 반영되게 꺼놨음!
+    cache: false
+    
