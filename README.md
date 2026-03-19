@@ -33,3 +33,11 @@
 * **OS:** macOS (MacBook Air M4) 💻
 * **Security:** VS Code `launch.json`을 활용한 환경 변수(DB 비밀번호) 보안 관리 적용
 * **IDE/Tools:** VS Code, Terminal
+
+## 🖥️ 화면 미리보기 (ScreenShot)
+
+<img src="./images/1.png" width="800">
+
+<img src="./images/2.png" width="800">
+
+<img src="./images/3.png" width="800">
