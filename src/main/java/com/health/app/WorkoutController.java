@@ -29,8 +29,9 @@ public class WorkoutController {
 
     // 3. 기록 삭제 기능 (실제로 쓸 때 필수!)
     @GetMapping("/delete/{id}")
-    public RedirectView deleteWorkout(@PathVariable Long id) {
+    public RedirectView deleteWorkout(@PathVariable("id") Long id) {
         workoutRepository.deleteById(id);
         return new RedirectView("/dashboard");
     }
+
 }

@@ -1,14 +1,16 @@
 spring:
   datasource:
-    url: jdbc:mysql://gateway01.ap-northeast-1.prod.aws.tidbcloud.com:4000/test?sslMode=REQUIRED
+    # 💡 TiDB Cloud 권장 SSL 설정으로 변경했음!
+    url: jdbc:mysql://gateway01.ap-northeast-1.prod.aws.tidbcloud.com:4000/test?useSSL=true&verifyServerCertificate=true
     username: 2EBXp9bbFQWPD6t.root
-    password: ${TIDB_PASSWORD} # 환경 변수로 비밀번호 관리₩
+    # 💡 [중요] 일단 접속 확인을 위해 진짜 비밀번호를 ' ' 안에 직접 넣어서 테스트해보셈!
+    password: ${TIDB_PASSWORD}
 
     hikari:
-      maximum-pool-size: 10 # 동시에 연결할 수 있는 최대 개수
-      connection-timeout: 30000 # 연결 시도 시간 (30초)
-      idle-timeout: 600000 # 노는 연결 유지 시간
-      max-lifetime: 1800000 # 연결의 최대 수명
+      maximum-pool-size: 10
+      connection-timeout: 30000
+      idle-timeout: 600000
+      max-lifetime: 1800000
 
   jpa:
     hibernate:
@@ -17,9 +19,8 @@ spring:
     properties:
       hibernate:
         "[format_sql]": true
-        # 💡 [핵심 수정] 숫자 '8'을 빼고 그냥 MySQLDialect라고만 적어주면 됨! [cite: 2026-02-19]
+        # 💡 TiDB와 가장 잘 맞는 MySQL 방언 설정임! [cite: 2026-02-19]
         dialect: org.hibernate.dialect.MySQLDialect
 
   thymeleaf:
     cache: false
-    

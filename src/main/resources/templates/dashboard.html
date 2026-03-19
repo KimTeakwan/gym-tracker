@@ -8,209 +8,187 @@
         body { background-color: #f4f7f6; font-family: 'Apple SD Gothic Neo', sans-serif; }
         .main-card { border-radius: 15px; border: none; box-shadow: 0 10px 30px rgba(0,0,0,0.05); }
         .btn-primary { background-color: #007aff; border: none; }
-        .summary-card { background: linear-gradient(135deg, #007aff 0%, #00c6ff 100%); color: white; border-radius: 20px; }
         .timer-container { position: relative; width: 120px; height: 120px; margin: 0 auto; }
         .timer-svg { transform: rotate(-90deg); width: 120px; height: 120px; }
         .timer-circle-bg { fill: none; stroke: #eee; stroke-width: 8; }
         .timer-circle-prog { fill: none; stroke: #007aff; stroke-width: 8; stroke-dasharray: 339.292; stroke-dashoffset: 0; transition: stroke-dashoffset 1s linear; }
         #timerDisplay { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 1.5rem; font-weight: bold; color: #007aff; }
         #sessionClock { font-family: 'Courier New', Courier, monospace; font-size: 2.5rem; color: #ff3b30; }
-        /* 💡 추가된 스타일 */
         .quick-btn { font-size: 0.8rem; margin-right: 5px; margin-bottom: 5px; border-radius: 20px; }
-        .stepper-btn { width: 30px; height: 38px; border: 1px solid #ced4da; background: #fff; cursor: pointer; }
-        .stepper-btn:hover { background: #f8f9fa; }
+        .nav-pills .nav-link { border-radius: 20px; font-weight: bold; color: #667; }
+        .nav-pills .nav-link.active { background-color: #007aff; color: white; }
+        .view-section { display: none; }
+        .view-section.active { display: block; }
+        .cardio-display { background: #2c3e50; color: #2ecc71; padding: 20px; border-radius: 15px; font-family: 'Courier New', monospace; }
     </style>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body class="py-5">
     <div class="container">
-        <h2 class="text-center mb-5">🔥 6월 바디프로필 성공 기원 로그</h2>
+        <h2 class="text-center mb-4">🔥 6월 바디프로필 성공 기원 로그</h2>
 
-        <div class="card main-card p-4 mb-4 text-center border-primary border-2 shadow">
-            <h5 class="mb-3 text-primary fw-bold">🏋️‍♂️ 전체 운동 세션 (Workout Session)</h5>
-            <div id="sessionClock" class="mb-3">00:00:00</div>
-            <script>
-                (function() {
-                    const start = localStorage.getItem('sessionStartTime');
-                    if (start) {
-                        const now = new Date();
-                        const diff = new Date(now - parseInt(start));
-                        const h = String(diff.getUTCHours()).padStart(2, '0');
-                        const m = String(diff.getUTCMinutes()).padStart(2, '0');
-                        const s = String(diff.getUTCSeconds()).padStart(2, '0');
-                        document.getElementById('sessionClock').innerText = `${h}:${m}:${s}`;
-                    }
-                })();
-            </script>
-            <div class="d-flex justify-content-center gap-3">
-                <button type="button" id="startBtn" class="btn btn-lg btn-primary px-5" onclick="startSession()">운동 시작! 🚀</button>
-                <button type="button" id="endBtn" class="btn btn-lg btn-danger px-5" onclick="endSession()" disabled>운동 종료! 🏁</button>
+        <ul class="nav nav-pills justify-content-center mb-4">
+            <li class="nav-item"><button class="nav-link active" id="tab-weight" onclick="switchView('weight')">🏋️‍♂️ 웨이트</button></li>
+            <li class="nav-item ms-2"><button class="nav-link" id="tab-cardio" onclick="switchView('cardio')">🏃‍♂️ 유산소</button></li>
+        </ul>
+
+        <div id="weightSection" class="view-section active">
+            <div class="card main-card p-4 mb-4 text-center border-primary border-2 shadow">
+                <h5 class="mb-3 text-primary fw-bold">🏋️‍♂️ 전체 운동 세션</h5>
+                <div id="sessionClock" class="mb-3">00:00:00</div>
+                <div class="d-flex justify-content-center gap-3">
+                    <button type="button" id="startBtn" class="btn btn-lg btn-primary px-5" onclick="startSession()">운동 시작! 🚀</button>
+                    <button type="button" id="endBtn" class="btn btn-lg btn-danger px-5" onclick="endSession()" disabled>운동 종료! 🏁</button>
+                </div>
+            </div>
+
+            <form action="/api/workouts/add" method="post" onsubmit="saveSessionState()">
+                <div class="row mb-5">
+                    <div class="col-lg-8">
+                        <div class="card main-card p-4 h-100 shadow-sm">
+                            <h5 class="mb-3 text-primary fw-bold">📝 종목 추가하기</h5>
+                            <div class="mb-3">
+                                <button type="button" class="btn btn-sm btn-outline-secondary quick-btn" onclick="quickFill('벤치프레스', '가슴', 60, 10, 3)">가슴 벤치</button>
+                                <button type="button" class="btn btn-sm btn-outline-secondary quick-btn" onclick="quickFill('데드리프트', '등', 100, 5, 3)">등 데드</button>
+                                <button type="button" class="btn btn-sm btn-outline-secondary quick-btn" onclick="quickFill('스쿼트', '하체', 80, 8, 3)">하체 스쿼트</button>
+                            </div>
+                            <div class="row g-2 align-items-center">
+                                <div class="col-md-3"><input type="text" id="inputName" name="name" class="form-control" placeholder="운동 종목" required></div>
+                                <div class="col-md-3">
+                                    <select id="inputCategory" name="category" class="form-select">
+                                        <option value="가슴">가슴</option><option value="등">등</option><option value="하체">하체</option><option value="어깨">어깨</option><option value="팔">팔</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-2"><input type="number" id="inputWeight" name="weight" class="form-control text-center" placeholder="kg" required></div>
+                                <div class="col-md-2"><input type="number" id="inputReps" name="reps" class="form-control text-center" placeholder="회" required></div>
+                                <div class="col-md-2"><input type="number" id="inputSets" name="sets" class="form-control text-center" placeholder="세트" required></div>
+                                <input type="hidden" name="durationMinutes" id="durationMinutes" value="0">
+                                <div class="col-md-12 mt-3"><button type="submit" class="btn btn-primary w-100 fw-bold">기록 추가 🚀</button></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </form>
+
+            <div th:each="entry : ${groupedWorkouts}" class="mb-5">
+                <div class="category-header mb-2">
+                    <span class="badge rounded-pill bg-primary" th:text="${entry.key} + ' 운동 로그'"></span>
+                </div>
+                <div class="card main-card p-3 shadow-sm">
+                    <table class="table text-center align-middle">
+                        <thead><tr><th>종목</th><th>상세</th><th>총 볼륨</th><th>관리</th></tr></thead>
+                        <tbody>
+                            <tr th:each="w : ${entry.value}">
+                                <td class="fw-bold" th:text="${w.name}"></td>
+                                <td th:text="${w.weight} + 'kg x ' + ${w.reps} + '회 x ' + ${w.sets} + '세트'"></td>
+                                <td class="text-primary fw-bold" th:text="${w.totalVolume}"></td>
+                                <td><a th:href="@{/api/workouts/delete/{id}(id=${w.id})}" class="btn btn-sm btn-outline-danger">삭제</a></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </div>
 
-        <form action="/api/workouts/add" method="post" onsubmit="saveSessionState()">
-            <div class="row mb-5">
-                <div class="col-lg-8">
-                    <div class="card main-card p-4 h-100 shadow-sm">
-                        <h5 class="mb-3 text-primary fw-bold">📝 종목 추가하기</h5>
-                        
-                        <div class="mb-3">
-                            <label class="form-label small text-muted">자주 하는 종목: </label><br>
-                            <button type="button" class="btn btn-sm btn-outline-secondary quick-btn" onclick="quickFill('벤치프레스', '가슴', 60, 10, 3)">가슴 벤치</button>
-                            <button type="button" class="btn btn-sm btn-outline-secondary quick-btn" onclick="quickFill('데드리프트', '등', 100, 5, 3)">등 데드</button>
-                            <button type="button" class="btn btn-sm btn-outline-secondary quick-btn" onclick="quickFill('스쿼트', '하체', 80, 8, 3)">하체 스쿼트</button>
-                            <button type="button" class="btn btn-sm btn-outline-secondary quick-btn" onclick="quickFill('숄더프레스', '어깨', 40, 12, 3)">어깨 숄더</button>
-                            <button type="button" class="btn btn-sm btn-outline-secondary quick-btn" onclick="quickFill('암컬', '팔', 15, 15, 3)">팔 암컬</button>
-                        </div>
-
-                        <div class="row g-2 align-items-center">
-                            <div class="col-md-3"><input type="text" id="inputName" name="name" class="form-control" placeholder="운동 종목" required></div>
-                            <div class="col-md-3">
-                                <select id="inputCategory" name="category" class="form-select">
-                                    <option value="가슴">가슴</option><option value="등">등</option>
-                                    <option value="하체">하체</option><option value="어깨">어깨</option><option value="팔">팔</option>
-                                </select>
-                            </div>
-                            
-                            <div class="col-md-2">
-                                <div class="input-group">
-                                    <button type="button" class="stepper-btn" onclick="stepVal('inputWeight', -5)">-</button>
-                                    <input type="number" id="inputWeight" name="weight" class="form-control text-center px-1" placeholder="kg" min="0" required>
-                                    <button type="button" class="stepper-btn" onclick="stepVal('inputWeight', 5)">+</button>
-                                </div>
-                            </div>
-                            <div class="col-md-2">
-                                <div class="input-group">
-                                    <button type="button" class="stepper-btn" onclick="stepVal('inputReps', -1)">-</button>
-                                    <input type="number" id="inputReps" name="reps" class="form-control text-center px-1" placeholder="회" min="0" required>
-                                    <button type="button" class="stepper-btn" onclick="stepVal('inputReps', 1)">+</button>
-                                </div>
-                            </div>
-                            <div class="col-md-2">
-                                <div class="input-group">
-                                    <button type="button" class="stepper-btn" onclick="stepVal('inputSets', -1)">-</button>
-                                    <input type="number" id="inputSets" name="sets" class="form-control text-center px-1" placeholder="세트" min="0" required>
-                                    <button type="button" class="stepper-btn" onclick="stepVal('inputSets', 1)">+</button>
-                                </div>
-                            </div>
-
-                            <input type="hidden" name="durationMinutes" id="durationMinutes" value="0">
-                            <div class="col-md-12 mt-3"><button type="submit" class="btn btn-primary w-100 fw-bold">기록 추가 🚀</button></div>
-                        </div>
+        <div id="cardioSection" class="view-section">
+            <div class="card main-card p-5 text-center shadow mb-5">
+                <h4 class="mb-4 text-primary fw-bold">🏃‍♂️ 유산소 실시간 트래커</h4>
+                <div class="row mb-4 justify-content-center">
+                    <div class="col-md-4">
+                        <label class="fw-bold">종목</label>
+                        <select id="cardioType" class="form-select">
+                            <option value="런닝머신">런닝머신</option>
+                            <option value="사이클">사이클</option>
+                            <option value="천국의 계단">천국의 계단</option>
+                        </select>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="fw-bold">강도</label>
+                        <select id="cardioIntensity" class="form-select">
+                            <option value="3.5">저강도</option>
+                            <option value="7.0" selected>중강도</option>
+                            <option value="10.5">고강도</option>
+                        </select>
                     </div>
                 </div>
-
-                <div class="col-lg-4">
-                    <div class="card main-card p-4 text-center h-100 shadow-sm">
-                        <h5 class="mb-2 text-primary fw-bold">⏱️ 세트 사이 휴식</h5>
-                        <div class="timer-container mb-3">
-                            <svg class="timer-svg"><circle class="timer-circle-bg" cx="60" cy="60" r="54"></circle><circle id="progressCircle" class="timer-circle-prog" cx="60" cy="60" r="54"></circle></svg>
-                            <div id="timerDisplay">00:00</div>
-                        </div>
-                        <div class="input-group input-group-sm mb-3 mx-auto" style="max-width: 150px;">
-                            <input type="number" id="restInput" class="form-control" placeholder="초 입력" min="1">
-                            <button class="btn btn-primary" type="button" onclick="startCustomRest()">시작</button>
-                        </div>
-                        <div class="d-flex justify-content-center gap-2">
-                            <button type="button" class="btn btn-sm btn-outline-primary" onclick="startTimer(60)">1분</button>
-                            <button type="button" class="btn btn-sm btn-outline-primary" onclick="startTimer(90)">1.5분</button>
-                            <button type="button" class="btn btn-sm btn-danger" onclick="resetTimer()">리셋</button>
-                        </div>
-                    </div>
+                <div class="cardio-display mb-4">
+                    <div id="cardioTimer">00:00</div>
+                    <div id="cardioCalories">🔥 0.0 kcal</div>
+                </div>
+                <div class="d-flex justify-content-center gap-3">
+                    <button id="cardioStartBtn" class="btn btn-lg btn-success" onclick="startCardio()">시작 🚀</button>
+                    <button id="cardioStopBtn" class="btn btn-lg btn-danger" onclick="stopCardio()" disabled>종료 🏁</button>
                 </div>
             </div>
-        </form>
 
-        <div th:each="entry : ${groupedWorkouts}" class="mb-5">
-            <div class="category-header">
-                <span class="badge rounded-pill" 
-                      th:classappend="${entry.key == '가슴' ? 'bg-primary' : entry.key == '등' ? 'bg-success' : entry.key == '하체' ? 'bg-danger' : entry.key == '팔' ? 'bg-info text-dark' : 'bg-warning text-dark'}"
-                      th:text="${entry.key} + ' 운동 로그'"></span>
-            </div>
-            <div class="card main-card p-4 mt-2">
-                <table class="table text-center align-middle">
-                    <thead class="table-light"><tr><th>종목</th><th>상세</th><th>총 볼륨</th><th>소모 칼로리</th><th>관리</th></tr></thead>
-                    <tbody>
-                        <tr th:each="w : ${entry.value}" class="workout-row">
-                            <td class="fw-bold" th:text="${w.name}"></td>
-                            <td th:text="${w.weight} + 'kg x ' + ${w.reps} + '회 x ' + ${w.sets} + '세트'"></td>
-                            <td class="text-primary fw-bold volume-val" th:text="${#numbers.formatInteger(w.totalVolume, 0, 'COMMA')}"></td>
-                            <td class="text-danger fw-bold calorie-val">🔥 <span th:text="${w.caloriesBurned}"></span> kcal</td>
-                            <td><a th:href="@{/api/workouts/delete/{id}(id=${w.id})}" class="btn btn-sm btn-outline-danger">삭제</a></td>
-                        </tr>
-                    </tbody>
-                </table>
+            <div class="mb-5">
+                <div class="category-header mb-2">
+                    <span class="badge rounded-pill bg-dark text-success p-2 px-3">🏃‍♂️ 유산소 운동 로그</span>
+                </div>
+                <div class="card main-card p-3 shadow-sm">
+                    <table class="table text-center align-middle">
+                        <thead class="table-light">
+                            <tr><th>종목</th><th>강도</th><th>초(Seconds)</th><th>칼로리</th><th>기록일</th><th>관리</th></tr>
+                        </thead>
+                        <tbody>
+                            <tr th:each="c : ${cardioWorkouts}">
+                                <td class="fw-bold" th:text="${c.type}"></td>
+                                <td th:text="${c.intensity}"></td>
+                                <td th:text="${c.durationSeconds} + '초'"></td>
+                                <td class="text-danger fw-bold" th:text="${c.calories} + ' kcal'"></td>
+                                <td class="small text-muted" th:text="${c.createdAt}"></td>
+                                <td><a th:href="@{/api/cardio/delete/{id}(id=${c.id})}" class="btn btn-sm btn-outline-danger">삭제</a></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </div>
     </div>
 
-    <script th:inline="javascript">
-        let sessionInterval;
-
-        window.onload = function() {
-            const startTime = localStorage.getItem('sessionStartTime');
-            if (startTime) resumeSession(new Date(parseInt(startTime)));
-        };
-
-        // 💡 [기능 1] 퀵 입력 함수
-        function quickFill(name, category, weight, reps, sets) {
-            document.getElementById('inputName').value = name;
-            document.getElementById('inputCategory').value = category;
-            document.getElementById('inputWeight').value = weight;
-            document.getElementById('inputReps').value = reps;
-            document.getElementById('inputSets').value = sets;
-        }
-
-        // 💡 [기능 2] 숫자 증감 함수 [cite: 2026-02-19]
-        function stepVal(id, step) {
-            const el = document.getElementById(id);
-            let cur = parseInt(el.value) || 0;
-            el.value = Math.max(0, cur + step);
-        }
-
-        function saveSessionState() {
-            const startTime = localStorage.getItem('sessionStartTime');
-            if (startTime) {
-                const now = new Date();
-                const diffMinutes = Math.floor((now - parseInt(startTime)) / 60000);
-                document.getElementById('durationMinutes').value = Math.max(1, diffMinutes);
+    <script>
+        function switchView(view) {
+            document.querySelectorAll('.view-section').forEach(s => s.classList.remove('active'));
+            document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
+            if(view === 'weight') {
+                document.getElementById('weightSection').classList.add('active');
+                document.getElementById('tab-weight').classList.add('active');
+            } else {
+                document.getElementById('cardioSection').classList.add('active');
+                document.getElementById('tab-cardio').classList.add('active');
             }
         }
 
-        function startSession() {
-            const startTime = new Date().getTime();
-            localStorage.setItem('sessionStartTime', startTime);
-            resumeSession(new Date(startTime));
-        }
-
-        function resumeSession(startTime) {
-            document.getElementById('startBtn').disabled = true;
-            document.getElementById('endBtn').disabled = false;
-            sessionInterval = setInterval(() => {
-                const now = new Date();
-                const diff = new Date(now - startTime);
-                const h = String(diff.getUTCHours()).padStart(2, '0');
-                const m = String(diff.getUTCMinutes()).padStart(2, '0');
-                const s = String(diff.getUTCSeconds()).padStart(2, '0');
-                document.getElementById('sessionClock').innerText = `${h}:${m}:${s}`;
+        let cInterval, cSec = 0;
+        function startCardio() {
+            document.getElementById('cardioStartBtn').disabled = true;
+            document.getElementById('cardioStopBtn').disabled = false;
+            cInterval = setInterval(() => {
+                cSec++;
+                document.getElementById('cardioTimer').innerText = `${Math.floor(cSec/60).toString().padStart(2,'0')}:${(cSec%60).toString().padStart(2,'0')}`;
+                const met = parseFloat(document.getElementById('cardioIntensity').value);
+                const cal = (met * 75 * (cSec / 3600) * 1.05).toFixed(1);
+                document.getElementById('cardioCalories').innerText = `🔥 ${cal} kcal`;
             }, 1000);
         }
-
-        function endSession() {
-            clearInterval(sessionInterval);
-            const finalTime = document.getElementById('sessionClock').innerText;
-            alert(`🏆 [오운완 성적표] 🏆\n⏱️ 운동 시간: ${finalTime}`);
-            localStorage.removeItem('sessionStartTime');
-            location.reload();
+        function stopCardio() {
+            clearInterval(cInterval);
+            fetch('/api/cardio', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ type: document.getElementById('cardioType').value, durationSeconds: cSec, calories: parseFloat((parseFloat(document.getElementById('cardioIntensity').value) * 75 * (cSec / 3600) * 1.05).toFixed(1)), intensity: document.getElementById('cardioIntensity').selectedOptions[0].text })
+            }).then(() => location.reload());
         }
 
-        // 휴식 타이머 로직 (기존 유지)
-        let timerInterval, totalTime;
-        const progressCircle = document.getElementById('progressCircle'), circumference = 2 * Math.PI * 54;
-        function startTimer(s) { clearInterval(timerInterval); totalTime = s; let tl = s; updateTimer(tl); timerInterval = setInterval(() => { tl--; updateTimer(tl); if (tl <= 0) { clearInterval(timerInterval); alert("🔔 휴식 끝! 드가자~!"); resetTimer(); } }, 1000); }
-        function startCustomRest() { const val = document.getElementById('restInput').value; if (val > 0) startTimer(parseInt(val)); else alert("초 입력!"); }
-        function updateTimer(tl) { const m = Math.floor(tl / 60), s = tl % 60; document.getElementById('timerDisplay').innerText = `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`; progressCircle.style.strokeDashoffset = circumference - (tl / totalTime) * circumference; }
-        function resetTimer() { clearInterval(timerInterval); document.getElementById('timerDisplay').innerText = "00:00"; progressCircle.style.strokeDashoffset = 0; }
+        let sessionInterval;
+        window.onload = function() { const s = localStorage.getItem('sessionStartTime'); if(s) resumeSession(new Date(parseInt(s))); };
+        function quickFill(n, c, w, r, s) { document.getElementById('inputName').value = n; document.getElementById('inputCategory').value = c; document.getElementById('inputWeight').value = w; document.getElementById('inputReps').value = r; document.getElementById('inputSets').value = s; }
+        function startSession() { const s = new Date().getTime(); localStorage.setItem('sessionStartTime', s); resumeSession(new Date(s)); }
+        function resumeSession(s) { 
+            document.getElementById('startBtn').disabled = true; document.getElementById('endBtn').disabled = false;
+            sessionInterval = setInterval(() => { const d = new Date(new Date() - s); document.getElementById('sessionClock').innerText = d.getUTCHours().toString().padStart(2,'0') + ":" + d.getUTCMinutes().toString().padStart(2,'0') + ":" + d.getUTCSeconds().toString().padStart(2,'0'); }, 1000); 
+        }
+        function endSession() { clearInterval(sessionInterval); localStorage.removeItem('sessionStartTime'); location.reload(); }
+        function saveSessionState() { const s = localStorage.getItem('sessionStartTime'); if(s) document.getElementById('durationMinutes').value = Math.max(1, Math.floor((new Date() - parseInt(s)) / 60000)); }
     </script>
 </body>
 </html>
