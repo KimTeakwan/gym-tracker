@@ -260,13 +260,30 @@
             }, 1000);
         }
         function stopCardio() {
-            clearInterval(cInterval);
-            fetch('/api/cardio', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ type: document.getElementById('cardioType').value, durationSeconds: cSec, calories: parseFloat((parseFloat(document.getElementById('cardioIntensity').value) * 75 * (cSec / 3600) * 1.05).toFixed(1)), intensity: document.getElementById('cardioIntensity').selectedOptions[0].text })
-            }).then(() => location.reload());
+    clearInterval(cInterval);
+    
+    const cardioData = {
+        type: document.getElementById('cardioType').value,
+        intensity: document.getElementById('cardioIntensity').selectedOptions[0].text,
+        durationSeconds: cSec,
+        calories: parseFloat((parseFloat(document.getElementById('cardioIntensity').value) * 75 * (cSec / 3600) * 1.05).toFixed(1))
+        // 💡 [수정] distance 항목을 삭제하였습니다. [cite: 2026-03-15]
+    };
+
+    fetch('/api/cardio', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(cardioData)
+    })
+    .then(response => {
+        if(response.ok) {
+            alert("유산소 완료! 오늘도 수고하셨습니다. 💪");
+            location.reload(); 
+        } else {
+            alert("저장 실패... 서버 로그를 확인해 주세요! 😡");
         }
+    });
+}
 
         // 5. 세션 시계 로직 & 자동 폼 채우기
         let sessionInterval;

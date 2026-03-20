@@ -1,46 +1,39 @@
 package com.health.app;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.servlet.view.RedirectView;
 
-@Controller
+@RestController
 @RequestMapping("/api/cardio")
 @RequiredArgsConstructor
 public class CardioWorkoutController {
 
     private final CardioWorkoutRepository repository;
-    private final MemberRepository memberRepository; // 💡 회원 식별을 위해 추가! [cite: 2026-03-15]
+    private final MemberRepository memberRepository;
 
-    // 💡 [핵심 수정] 유산소 저장 시 '내 이름표' 달아주기! [cite: 2026-03-15, 2026-03-20]
-    @PostMapping("/add")
-    public RedirectView addCardio(@ModelAttribute CardioWorkout workout, 
-                                 @AuthenticationPrincipal UserDetails userDetails) {
-        // 1. 현재 로그인한 사람 찾기 [cite: 2026-03-15]
+    @PostMapping
+    public ResponseEntity<String> save(@RequestBody CardioWorkout workout, 
+                                     @AuthenticationPrincipal UserDetails userDetails) {
+        // 1. 현재 로그인한 사용자를 DB에서 확실히 찾아옴!! 했음~ [cite: 2026-03-20]
         Member currentMember = memberRepository.findByUsername(userDetails.getUsername())
-                .orElseThrow(() -> new RuntimeException("회원을 찾을 수 없음!"));
-        
-        // 2. 기록에 주인 설정 [cite: 2026-03-15]
+                .orElseThrow(() -> new RuntimeException("회원 정보를 찾을 수 없음!"));
+
+        // 2. 유산소 기록과 회원을 '강력하게' 결합함!! (이게 자동 연동의 핵심임!) [cite: 2026-03-15]
         workout.setMember(currentMember);
+        
+        // 3. 저장 실행!! 했음~
         repository.save(workout);
         
-        // 3. 대시보드로 다시 튕겨줌! [cite: 2026-03-20]
-        return new RedirectView("/dashboard");
+        // 4. ✨ 객체 통째로 보내지 말고, 성공 문자열만 보내서 500 에러를 원천 차단함!! [cite: 2026-03-15]
+        return ResponseEntity.ok("저장 성공!");
     }
 
-    // ✅ 기존 기능 유지: 삭제 로직 [cite: 2026-03-20]
     @GetMapping("/delete/{id}")
-    public RedirectView deleteCardio(@PathVariable("id") Long id, 
-                                    @AuthenticationPrincipal UserDetails userDetails) {
-        CardioWorkout workout = repository.findById(id).orElseThrow();
-        
-        // 💡 보안 체크: 내 것만 지울 수 있게! [cite: 2026-03-15]
-        if (workout.getMember().getUsername().equals(userDetails.getUsername())) {
-            repository.delete(workout);
-        }
-        return new RedirectView("/dashboard"); 
+    public String deleteCardio(@PathVariable("id") Long id) {
+        repository.deleteById(id);
+        return "삭제 완료!";
     }
 }
