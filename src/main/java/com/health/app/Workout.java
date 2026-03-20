@@ -40,12 +40,25 @@ public class Workout {
         return this.weight * this.reps * this.sets;
     }
 
-    // ✅ 기존 기능 유지: 디테일한 칼로리 계산 로직 (75kg, MET 5.0 적용) [cite: 2026-03-15]
+    // ✅ 기존 기능 유지: 디테일한 칼로리 계산 로직 (75kg, MET 5.0 적용)
     public int getCaloriesBurned() {
         double userWeight = 75.0; 
         double met = 5.0;         
         double caloriesByTime = met * userWeight * (this.durationMinutes / 60.0);
         double caloriesByVolume = (this.getTotalVolume() / 1000.0) * 5.0;
         return (int) (caloriesByTime + caloriesByVolume);
+    }
+
+    // ✨ [신규 추가] 웨이트 기록용 시간 변환기!! 했음~ 
+    public String getFormattedDateTime() {
+        if (this.createdAt == null) return "";
+        java.time.format.DateTimeFormatter dateFmt = java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd");
+        java.time.format.DateTimeFormatter timeFmt = java.time.format.DateTimeFormatter.ofPattern("HH:mm");
+        
+        String date = this.createdAt.format(dateFmt);
+        String start = this.createdAt.format(timeFmt);
+        String end = this.createdAt.plusMinutes(this.durationMinutes).format(timeFmt);
+        
+        return date + "/" + start + "-" + end;
     }
 }
