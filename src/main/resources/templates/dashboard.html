@@ -88,6 +88,23 @@
                             </div>
                         </div>
                     </div>
+                    <div class="col-lg-4">
+                        <div class="card main-card p-4 text-center h-100 shadow-sm">
+                            <h5 class="mb-2 text-primary fw-bold">⏱️ 세트 사이 휴식</h5>
+                            <div class="timer-container mb-3">
+                                <svg class="timer-svg"><circle class="timer-circle-bg" cx="60" cy="60" r="54"></circle><circle id="progressCircle" class="timer-circle-prog" cx="60" cy="60" r="54"></circle></svg>
+                                <div id="timerDisplay">00:00</div>
+                            </div>
+                            <div class="input-group input-group-sm mb-3 mx-auto" style="max-width: 150px;">
+                                <input type="number" id="restInput" class="form-control" placeholder="초 입력" min="1">
+                                <button class="btn btn-primary" type="button" onclick="startCustomRest()">시작</button>
+                            </div>
+                            <div class="d-flex justify-content-center gap-2">
+                                <button type="button" class="btn btn-sm btn-outline-primary" onclick="startTimer(60)">1분</button>
+                                <button type="button" class="btn btn-sm btn-danger" onclick="resetTimer()">리셋</button>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </form>
 
@@ -99,12 +116,12 @@
                 </div>
                 <div class="card main-card p-3 shadow-sm">
                     <table class="table text-center align-middle">
-                        <thead><tr><th>종목</th><th>상세</th><th>기록 일시</th><th>관리</th></tr></thead>
+                        <thead><tr><th>종목</th><th>상세</th><th>총 볼륨</th><th>관리</th></tr></thead>
                         <tbody>
                             <tr th:each="w : ${entry.value}">
                                 <td class="fw-bold" th:text="${w.name}"></td>
                                 <td th:text="${w.weight} + 'kg x ' + ${w.reps} + '회 x ' + ${w.sets} + '세트'"></td>
-                                <td class="small text-muted fw-bold" th:text="${w.formattedDateTime}"></td>
+                                <td class="text-primary fw-bold" th:text="${w.totalVolume}"></td>
                                 <td><a th:href="@{/api/workouts/delete/{id}(id=${w.id})}" class="btn btn-sm btn-outline-danger">삭제</a></td>
                             </tr>
                         </tbody>
@@ -151,7 +168,7 @@
                 <div class="card main-card p-3 shadow-sm">
                     <table class="table text-center align-middle">
                         <thead class="table-light">
-                            <tr><th>종목</th><th>강도</th><th>운동 시간</th><th>소모 칼로리</th><th>기록 일시</th><th>관리</th></tr>
+                            <tr><th>종목</th><th>강도</th><th>운동 시간(초)</th><th>소모 칼로리</th><th>기록 일시</th><th>관리</th></tr>
                         </thead>
                         <tbody>
                             <tr th:each="c : ${cardioWorkouts}">
@@ -170,6 +187,7 @@
     </div>
 
     <script th:inline="javascript">
+        // 1. 화면 전환 (탭) - 기존 로직 유지했음~
         function switchView(view) {
             document.querySelectorAll('.view-section').forEach(s => s.classList.remove('active'));
             document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
@@ -182,6 +200,47 @@
             }
         }
 
+        // 2. 휴식 타이머 & 차트 로직 (기존 기능 100% 보존!! 했음~)
+        let tInt, total; 
+        const circle = document.getElementById('progressCircle');
+        const circum = circle ? 2 * Math.PI * 54 : 0;
+        
+        function startTimer(s) { 
+            clearInterval(tInt); total = s; let tl = s; 
+            tInt = setInterval(() => { 
+                tl--; updateT(tl); 
+                if(tl<=0){ clearInterval(tInt); alert("휴식 끝! 다음 세트 드가자! 🔥"); resetTimer(); } 
+            }, 1000); 
+        }
+        function startCustomRest() { const v = document.getElementById('restInput').value; if(v>0) startTimer(parseInt(v)); }
+        function updateT(tl) { 
+            document.getElementById('timerDisplay').innerText = `${Math.floor(tl/60).toString().padStart(2,'0')}:${(tl%60).toString().padStart(2,'0')}`; 
+            if(circle) circle.style.strokeDashoffset = circum - (tl/total)*circum; 
+        }
+        function resetTimer() { clearInterval(tInt); document.getElementById('timerDisplay').innerText = "00:00"; if(circle) circle.style.strokeDashoffset = 0; }
+
+        const dailyVolumes = /*[[${dailyVolumes}]]*/ {};
+        if (dailyVolumes && Object.keys(dailyVolumes).length > 0) {
+            const labels = Object.keys(dailyVolumes).sort();
+            const data = labels.map(date => dailyVolumes[date]);
+            new Chart(document.getElementById('weeklyVolumeChart'), {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: '총 훈련 볼륨 (kg * reps * sets)',
+                        data: data,
+                        backgroundColor: 'rgba(0, 122, 255, 0.6)',
+                        borderColor: 'rgba(0, 122, 255, 1)',
+                        borderWidth: 1,
+                        borderRadius: 5
+                    }]
+                },
+                options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true } } }
+            });
+        }
+
+        // 3. 유산소 실시간 트래커
         let cInterval, cSec = 0;
         function startCardio() {
             document.getElementById('cardioStartBtn').disabled = true;
@@ -211,41 +270,20 @@
             })
             .then(response => {
                 if(response.ok) {
-                    alert("유산소 완료! 💪");
-                    // 🚀 종료 후 유산소 탭으로 바로 이동!! 했음~
+                    alert("유산소 완료! 오늘도 수고하셨습니다. 💪");
+                    // ✨ [핵심 수정] 저장 후 즉시 유산소 탭으로 리다이렉트!! 했음~
                     location.href = "/dashboard?tab=cardio"; 
                 }
             });
         }
 
-        // 차트 및 기타 기존 로직 생략 (기존 기능 100% 유지!!)
-        const dailyVolumes = /*[[${dailyVolumes}]]*/ {};
-        if (dailyVolumes && Object.keys(dailyVolumes).length > 0) {
-            const labels = Object.keys(dailyVolumes).sort();
-            const data = labels.map(date => dailyVolumes[date]);
-            new Chart(document.getElementById('weeklyVolumeChart'), {
-                type: 'bar',
-                data: {
-                    labels: labels,
-                    datasets: [{
-                        label: '총 훈련 볼륨 (kg * reps * sets)',
-                        data: data,
-                        backgroundColor: 'rgba(0, 122, 255, 0.6)',
-                        borderColor: 'rgba(0, 122, 255, 1)',
-                        borderWidth: 1,
-                        borderRadius: 5
-                    }]
-                },
-                options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true } } }
-            });
-        }
-
+        // 4. 세션 복구 및 초기 탭 설정 로직
         let sessionInterval;
         window.onload = function() { 
             const s = localStorage.getItem('sessionStartTime'); 
             if(s) resumeSession(new Date(parseInt(s))); 
             
-            // 💡 URL 파라미터를 확인해서 탭 자동 활성화!! 했음~
+            // 💡 서버에서 파라미터를 못 받았을 경우를 대비한 2중 방어벽임!! 했음~
             const urlParams = new URLSearchParams(window.location.search);
             if (urlParams.get('tab') === 'cardio') {
                 switchView('cardio');
