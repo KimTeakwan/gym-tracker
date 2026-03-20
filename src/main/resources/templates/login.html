@@ -93,6 +93,10 @@
             <strong>👋 오운완 수고하셨습니다!</strong><br>
             성공적으로 로그아웃 되었습니다. 득근하세요!
         </div>
+
+        <div th:if="${param.error}" class="alert alert-danger">
+            아이디/비번이 틀렸거나, 이메일 인증을 아직 안 하셨음!! 😡
+        </div>
         
         <form action="/login" method="post">
             <input type="text" name="username" class="form-control" placeholder="아이디" required>

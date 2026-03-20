@@ -10,18 +10,24 @@ public class Member {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    // 💡 로그인할 때 쓸 아이디 (중복 불가!)
     @Column(unique = true, nullable = false)
-    private String username;
+    private String username; // 로그인용 아이디
 
-    // 💡 시큐리티 관장님이 쓸 암호화된 비밀번호
     @Column(nullable = false)
     private String password;
 
-    // 💡 화면에 보여줄 닉네임 (예: 헬창아저씨)
     @Column(nullable = false)
     private String nickname;
     
-    // 💡 권한 설정 (일반 회원은 전부 'USER'로 통일!)
+    // ✨ [신규] 진짜 메일을 받을 주소! (중복 불가)
+    @Column(unique = true, nullable = false)
+    private String email; 
+
     private String role = "USER"; 
+
+    // ✨ [신규] 이메일 인증을 완료했는지 체크 (기본값 false) 했음~ [cite: 2026-01-11]
+    private boolean enabled = false;
+
+    // ✨ [신규] 인증용 랜덤 코드 했음~ [cite: 2026-01-11]
+    private String verificationCode;
 }

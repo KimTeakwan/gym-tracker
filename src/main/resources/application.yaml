@@ -1,10 +1,10 @@
 spring:
+  # 🏗️ 1. 데이터베이스(TiDB Cloud) 설정 했음~ [cite: 2026-02-19]
   datasource:
-    # 💡 TiDB Cloud 권장 SSL 설정으로 변경했음!
     url: jdbc:mysql://gateway01.ap-northeast-1.prod.aws.tidbcloud.com:4000/test?useSSL=true&verifyServerCertificate=true
     username: 2EBXp9bbFQWPD6t.root
-    # 💡 [중요] 일단 접속 확인을 위해 진짜 비밀번호를 ' ' 안에 직접 넣어서 테스트해보셈!
-    password: ${TIDB_PASSWORD}
+    # 💡 [필독] 진짜 비밀번호를 ' ' 안에 직접 넣어야 에러 안 남!
+    password: '${TIDB_PASSWORD}' 
 
     hikari:
       maximum-pool-size: 10
@@ -12,15 +12,30 @@ spring:
       idle-timeout: 600000
       max-lifetime: 1800000
 
+  # 📋 2. JPA & 하이버네이트 설정 했음~ [cite: 2026-02-19]
   jpa:
     hibernate:
       ddl-auto: update
     show-sql: true
     properties:
       hibernate:
-        "[format_sql]": true
-        # 💡 TiDB와 가장 잘 맞는 MySQL 방언 설정임! [cite: 2026-02-19]
+        format_sql: true
+        # TiDB와 찰떡궁합인 방언 설정임! [cite: 2026-02-19]
         dialect: org.hibernate.dialect.MySQLDialect
 
+  # 📩 3. 이메일 인증 서버 설정 했음~ [cite: 2026-03-20]
+  mail:
+    host: smtp.gmail.com
+    port: 587
+    username: ${MY_MAIL_USER}
+    password: ${MY_MAIL_PASS} 
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+
+  # 🎨 4. 화면 수정 바로 반영되게 캐시 껐음~ 했음!
   thymeleaf:
     cache: false

@@ -4,6 +4,8 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import java.util.Optional;
 
 public interface MemberRepository extends JpaRepository<Member, Long> {
-    // 💡 나중에 로그인할 때 "이 아이디 가진 사람 있어?" 하고 물어볼 때 쓸 메서드임!
     Optional<Member> findByUsername(String username);
+    
+    // ✨ [신규] 인증 코드로 회원을 찾는 기능 추가 했음~ [cite: 2026-01-11]
+    Member findByVerificationCode(String code);
 }

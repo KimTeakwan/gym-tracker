@@ -21,17 +21,17 @@ public class WorkoutViewController {
     @GetMapping("/dashboard")
     public String dashboard(Model model, @AuthenticationPrincipal UserDetails userDetails) {
         
-        // 1. 💡 [기존 유지] 로그인한 사람의 정보 가져오기 [cite: 2026-03-15]
+        // 1. 💡 [기존 유지] 로그인한 사람의 정보 가져오기 
         Member currentMember = memberRepository.findByUsername(userDetails.getUsername())
                 .orElseThrow(() -> new RuntimeException("회원을 찾을 수 없음!"));
 
-        // 2. 💡 [기존 유지] 닉네임 화면에 배달하기 [cite: 2026-03-15]
+        // 2. 💡 [기존 유지] 닉네임 화면에 배달하기 
         model.addAttribute("nickname", currentMember.getNickname());
 
-        // 3. 💡 [기존 유지] 내 웨이트 기록만 가져오기 [cite: 2026-03-15]
+        // 3. 💡 [기존 유지] 내 웨이트 기록만 가져오기 
         List<Workout> myWorkouts = workoutRepository.findAllByMember(currentMember);
         
-        // --- 통계 계산 로직 (기존 코드 그대로 유지함!) [cite: 2026-03-20] ---
+        // --- 통계 계산 로직 (기존 코드 그대로 유지함!)  ---
         List<Workout> validWorkouts = myWorkouts.stream()
                 .filter(w -> w.getCreatedAt() != null && w.getCategory() != null)
                 .collect(Collectors.toList());
@@ -51,8 +51,8 @@ public class WorkoutViewController {
                 .mapToInt(Workout::getTotalVolume)
                 .sum();
 
-        // ✨ [수정 완료] 이제 유산소도 '전체'가 아니라 '내 기록'만 가져옴!! [cite: 2026-03-15]
-        // findAll() ➡️ findAllByMember(currentMember) 로 변경 완료! 했음~ [cite: 2026-01-11]
+        // ✨ [수정 완료] 이제 유산소도 '전체'가 아니라 '내 기록'만 가져옴!! 
+        // findAll() ➡️ findAllByMember(currentMember) 로 변경 완료! 했음~ 
         List<CardioWorkout> myCardioWorkouts = cardioWorkoutRepository.findAllByMember(currentMember);
 
         model.addAttribute("cardioWorkouts", myCardioWorkouts);        
