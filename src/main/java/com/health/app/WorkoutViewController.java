@@ -1,6 +1,8 @@
 package com.health.app;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -13,14 +15,24 @@ import java.util.stream.Collectors;
 public class WorkoutViewController {
 
     private final WorkoutRepository workoutRepository;
-    // 💡 [수정 1] 유산소 DB 저장소도 무조건 주입받아야 함!
     private final CardioWorkoutRepository cardioWorkoutRepository;
+    private final MemberRepository memberRepository;
 
     @GetMapping("/dashboard")
-    public String dashboard(Model model) {
-        List<Workout> allWorkouts = Optional.ofNullable(workoutRepository.findAll()).orElse(new ArrayList<>());
+    public String dashboard(Model model, @AuthenticationPrincipal UserDetails userDetails) {
         
-        List<Workout> validWorkouts = allWorkouts.stream()
+        // 1. 💡 [기존 유지] 로그인한 사람의 정보 가져오기 [cite: 2026-03-15]
+        Member currentMember = memberRepository.findByUsername(userDetails.getUsername())
+                .orElseThrow(() -> new RuntimeException("회원을 찾을 수 없음!"));
+
+        // 2. 💡 [기존 유지] 닉네임 화면에 배달하기 [cite: 2026-03-15]
+        model.addAttribute("nickname", currentMember.getNickname());
+
+        // 3. 💡 [기존 유지] 내 웨이트 기록만 가져오기 [cite: 2026-03-15]
+        List<Workout> myWorkouts = workoutRepository.findAllByMember(currentMember);
+        
+        // --- 통계 계산 로직 (기존 코드 그대로 유지함!) [cite: 2026-03-20] ---
+        List<Workout> validWorkouts = myWorkouts.stream()
                 .filter(w -> w.getCreatedAt() != null && w.getCategory() != null)
                 .collect(Collectors.toList());
 
@@ -39,12 +51,12 @@ public class WorkoutViewController {
                 .mapToInt(Workout::getTotalVolume)
                 .sum();
 
-        // 💡 [수정 2] 대문자 CardioWorkoutRepository가 아니라 소문자 변수명으로 써야 함!
-        List<CardioWorkout> cardioWorkouts = cardioWorkoutRepository.findAll();
+        // ✨ [수정 완료] 이제 유산소도 '전체'가 아니라 '내 기록'만 가져옴!! [cite: 2026-03-15]
+        // findAll() ➡️ findAllByMember(currentMember) 로 변경 완료! 했음~ [cite: 2026-01-11]
+        List<CardioWorkout> myCardioWorkouts = cardioWorkoutRepository.findAllByMember(currentMember);
 
-        model.addAttribute("cardioWorkouts", cardioWorkouts);        
-        // 💡 [수정 3] goupedWorkouts -> groupedWorkouts 오타 수정!
-        model.addAttribute("groupedWorkouts", groupedWorkouts);
+        model.addAttribute("cardioWorkouts", myCardioWorkouts);        
+        model.addAttribute("groupedWorkouts", groupedWorkouts); 
         model.addAttribute("dailyVolumes", dailyVolumes);
         model.addAttribute("todayTotalVolume", todayTotalVolume);
         

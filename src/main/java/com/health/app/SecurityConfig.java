@@ -40,6 +40,7 @@ public class SecurityConfig {
         return http.build();
     }
 
+    /* 
     // 🏋️‍♂️ 2. 임시 헬스장 회원 (In-Memory User) 발급!
     // DB 연결 전까지 테스트용으로 쓸 "admin / 1234" 계정을 맥북 메모리에 띄워두는 거임!
     @Bean
@@ -53,6 +54,7 @@ public class SecurityConfig {
 
         return new InMemoryUserDetailsManager(user);
     }
+    */
 
     // 🏋️‍♂️ 3. 비밀번호 암호화 기계 설치 (BCrypt)
     @Bean

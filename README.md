@@ -36,8 +36,4 @@
 
 ## 🖥️ 화면 미리보기 (ScreenShot)
 
-<img src="./images/1.png" width="800">
-
-<img src="./images/2.png" width="800">
-
-<img src="./images/3.png" width="800">
+<img src="./src/main/resources/static/images/1.png" width="800">

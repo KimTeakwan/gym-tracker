@@ -16,7 +16,7 @@ public class Workout {
     private int weight;
     private int reps;
 
-    // 💡 [범인 검거] 'sets'는 예약어라 'workout_sets'로 이름을 바꿨음! [cite: 2026-02-19]
+    // ✅ 기존 기능 유지: 'sets' 예약어 회피 [cite: 2026-03-15]
     @Column(name = "workout_sets")
     private int sets;
 
@@ -25,27 +25,27 @@ public class Workout {
 
     private LocalDateTime createdAt;
 
+    // ✨ [신규 추가] 이 기록의 주인(Member) 연결! (N:1)
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "member_id")
+    private Member member; 
+
     @PrePersist
     public void prePersist() {
         if (this.createdAt == null) this.createdAt = LocalDateTime.now();
     }
 
+    // ✅ 기존 기능 유지: 총 볼륨 계산 [cite: 2026-03-15]
     public int getTotalVolume() {
         return this.weight * this.reps * this.sets;
     }
 
+    // ✅ 기존 기능 유지: 디테일한 칼로리 계산 로직 (75kg, MET 5.0 적용) [cite: 2026-03-15]
     public int getCaloriesBurned() {
-    double userWeight = 75.0; // 우리 친구 몸무게
-    double met = 5.0;         // 웨이트 트레이닝 강도 
-    
-    // 1. 시간 기반 계산
-    double caloriesByTime = met * userWeight * (this.durationMinutes / 60.0);
-    
-    // 2. 볼륨 기반 보너스 계산 (시간이 0일 때를 대비!) 
-    // 1,000kg(1톤) 당 약 5kcal 소모한다고 가정
-    double caloriesByVolume = (this.getTotalVolume() / 1000.0) * 5.0;
-    
-    // 두 값을 합산해서 더 정확한 소모량을 뽑아냄! 
-    return (int) (caloriesByTime + caloriesByVolume);
-}
+        double userWeight = 75.0; 
+        double met = 5.0;         
+        double caloriesByTime = met * userWeight * (this.durationMinutes / 60.0);
+        double caloriesByVolume = (this.getTotalVolume() / 1000.0) * 5.0;
+        return (int) (caloriesByTime + caloriesByVolume);
+    }
 }

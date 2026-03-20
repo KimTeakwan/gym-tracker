@@ -4,15 +4,77 @@
     <meta charset="UTF-8">
     <title>짐 트래커 - 회원가입 💪</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
     <style>
-        body { background-color: #f4f7f6; font-family: 'Apple SD Gothic Neo', sans-serif; display: flex; align-items: center; justify-content: center; height: 100vh; margin: 0; }
-        .signup-card { background: white; padding: 40px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); width: 100%; max-width: 400px; text-align: center; }
+        body { 
+            background-color: #000; /* 💡 영상 양옆 빈 공간을 검은색으로 채워서 더 고급지게! */
+            font-family: 'Apple SD Gothic Neo', sans-serif; 
+            display: flex; 
+            align-items: center; 
+            /* 💡 [핵심] 중앙(center) 대신 왼쪽(flex-start)으로 정렬! */
+            justify-content: flex-start; 
+            height: 100vh; 
+            margin: 0; 
+            /* 💡 [핵심] 왼쪽에서 10% 정도 띄워줘서 너무 구석에 안 붙게 함! */
+            padding-left: 10%; 
+        }
+
+        /* 🎬 [배경 동영상 세팅] 잘림 없이 전체 다 나오게! */
+        #bg-video {
+            position: fixed; right: 0; bottom: 0;
+            min-width: 100%; min-height: 100%;
+            z-index: -1; 
+            object-fit: contain; /* 💡 영상 전체가 다 보이게 유지! */
+            filter: brightness(0.6);
+        }
+        
+        /* 🍎 [반투명 유리 효과 세팅] */
+        .signup-card { 
+            background: rgba(255, 255, 255, 0.85); 
+            backdrop-filter: blur(10px); 
+            padding: 40px; border-radius: 20px; 
+            box-shadow: 0 15px 35px rgba(0,0,0,0.3); 
+            width: 100%; max-width: 400px; text-align: center; 
+            /* 💡 카드가 공중에 떠 있는 느낌을 위해 살짝 애니메이션 주면 더 간지남! */
+            animation: fadeIn 0.8s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateX(-20px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+
         .btn-primary { background-color: #007aff; border: none; font-weight: bold; padding: 12px; border-radius: 10px; }
         .btn-primary:hover { background-color: #005bb5; }
-        .form-control { border-radius: 10px; padding: 12px; margin-bottom: 15px; }
+        
+        input[type="text"].form-control:not(.gym-input-wrapper input) {
+            border-radius: 10px !important; padding: 12px 15px !important; margin-bottom: 15px !important;
+        }
+
+        /* 💡 [절대 안 깨지는 강철 껍데기 구조 유지!] */
+        .gym-input-wrapper {
+            display: flex; align-items: center; border: 1px solid #ced4da;
+            border-radius: 10px; background-color: #fff; margin-bottom: 15px; overflow: hidden; 
+        }
+        .gym-input-wrapper:focus-within {
+            border-color: #86b7fe; box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+        }
+        .gym-input-wrapper input {
+            border: none !important; box-shadow: none !important; padding: 12px 15px;
+            flex-grow: 1; width: 100%; outline: none; margin-bottom: 0 !important;
+        }
+        .gym-input-wrapper .eye-btn {
+            width: 50px; display: flex; justify-content: center; align-items: center;
+            padding: 12px 0; color: #6c757d; cursor: pointer; background-color: transparent;
+        }
+        .gym-input-wrapper .eye-btn:hover { color: #007aff; }
     </style>
 </head>
 <body>
+
+    <video autoplay loop muted playsinline id="bg-video">
+        <source src="/images/gym-bg.mp4" type="video/mp4">
+    </video>
 
     <div class="signup-card">
         <h2 class="mb-4 text-primary fw-bold">🔥 Gym Tracker</h2>
@@ -21,9 +83,19 @@
         <form action="/api/members/add" method="post" onsubmit="return validatePassword()">
             <input type="text" name="username" class="form-control" placeholder="사용할 아이디 입력" required>
             
-            <input type="password" id="password" name="password" class="form-control" placeholder="비밀번호 입력" required>
+            <div class="gym-input-wrapper">
+                <input type="password" id="password" name="password" placeholder="비밀번호 입력" required>
+                <div class="eye-btn" onclick="togglePassword('password', 'eyeIconPwd')">
+                    <i class="bi bi-eye" id="eyeIconPwd"></i>
+                </div>
+            </div>
             
-            <input type="password" id="passwordConfirm" class="form-control" placeholder="비밀번호 한 번 더 확인!" required>
+            <div class="gym-input-wrapper">
+                <input type="password" id="passwordConfirm" placeholder="비밀번호 한 번 더 확인!" required>
+                <div class="eye-btn" onclick="togglePassword('passwordConfirm', 'eyeIconPwdConfirm')">
+                    <i class="bi bi-eye" id="eyeIconPwdConfirm"></i>
+                </div>
+            </div>
             
             <input type="text" name="nickname" class="form-control" placeholder="멋진 닉네임 (예: 헬창아저씨)" required>
             
@@ -36,18 +108,32 @@
     </div>
 
     <script>
+        // 💡 비밀번호 일치 검사 그대로 유지! 있었음~ 했음~ 
         function validatePassword() {
             const pwd = document.getElementById('password').value;
             const pwdConfirm = document.getElementById('passwordConfirm').value;
             
             if(pwd !== pwdConfirm) {
-                // 두 개가 다르면 경고창 띄우고 전송 중단! 😱
                 alert('비밀번호가 서로 다릅니다! 다시 확인해주세요! 🏋️‍♂️💦');
-                document.getElementById('passwordConfirm').focus(); // 커서를 확인 칸으로 이동!
+                document.getElementById('passwordConfirm').focus();
                 return false; 
             }
-            // 똑같으면 무사 통과! 🚀
             return true; 
+        }
+
+        // 💡 아이콘 토글 그대로 유지! 했음~ 
+        function togglePassword(inputId, iconId) {
+            const input = document.getElementById(inputId);
+            const icon = document.getElementById(iconId);
+            if (input.type === 'password') {
+                input.type = 'text';
+                icon.classList.remove('bi-eye');
+                icon.classList.add('bi-eye-slash');
+            } else {
+                input.type = 'password';
+                icon.classList.remove('bi-eye-slash');
+                icon.classList.add('bi-eye');
+            }
         }
     </script>
 </body>

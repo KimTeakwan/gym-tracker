@@ -1,9 +1,10 @@
 package com.health.app;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.view.RedirectView;
-
 import java.util.List;
 
 @RestController
@@ -12,26 +13,42 @@ import java.util.List;
 public class WorkoutController {
 
     private final WorkoutRepository workoutRepository;
+    private final MemberRepository memberRepository; // 💡 회원 식별을 위해 추가!
 
-    // 1. 운동 기록 저장 (화면에서 폼 전송 시 사용)
+    // ✅ 기존 기능 유지: 운동 기록 저장 (이제 주인 정보까지 같이 저장함!) [cite: 2026-03-15]
     @PostMapping("/add")
-    public RedirectView addWorkout(@ModelAttribute Workout workout) {
+    public RedirectView addWorkout(@ModelAttribute Workout workout, 
+                                 @AuthenticationPrincipal UserDetails userDetails) {
+        // 현재 로그인한 사람 찾기
+        Member currentMember = memberRepository.findByUsername(userDetails.getUsername())
+                .orElseThrow(() -> new RuntimeException("회원 정보를 찾을 수 없음!"));
+        
+        workout.setMember(currentMember); // 기록에 주인표 달기!
         workoutRepository.save(workout);
-        // 저장 후 다시 대시보드 화면으로 튕겨줌! (실제 사용성 업그레이드)
         return new RedirectView("/dashboard");
     }
 
-    // 2. 전체 데이터 조회 (API 전용)
+    // ✅ 기존 기능 업데이트: 전체 조회가 아닌 '내 기록'만 조회로 변경! [cite: 2026-03-15]
     @GetMapping
-    public List<Workout> getAll() {
-        return workoutRepository.findAll();
+    public List<Workout> getMyWorkouts(@AuthenticationPrincipal UserDetails userDetails) {
+        Member currentMember = memberRepository.findByUsername(userDetails.getUsername())
+                .orElseThrow(() -> new RuntimeException("회원 정보를 찾을 수 없음!"));
+                
+        return workoutRepository.findAllByMember(currentMember);
     }
 
-    // 3. 기록 삭제 기능 (실제로 쓸 때 필수!)
+    // ✅ 기존 기능 유지: 기록 삭제 (내 것인지 확인하는 보안 로직 추가!) [cite: 2026-03-15]
     @GetMapping("/delete/{id}")
-    public RedirectView deleteWorkout(@PathVariable("id") Long id) {
-        workoutRepository.deleteById(id);
+    public RedirectView deleteWorkout(@PathVariable("id") Long id,
+                                    @AuthenticationPrincipal UserDetails userDetails) {
+        Workout workout = workoutRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("기록을 찾을 수 없음!"));
+        
+        // 💡 보안 체크: 삭제하려는 기록의 주인이 로그인한 사람과 일치하는가?
+        if (workout.getMember().getUsername().equals(userDetails.getUsername())) {
+            workoutRepository.delete(workout);
+        }
+        
         return new RedirectView("/dashboard");
     }
-
 }

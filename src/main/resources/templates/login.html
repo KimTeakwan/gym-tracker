@@ -4,23 +4,105 @@
     <meta charset="UTF-8">
     <title>짐 트래커 - 로그인 💪</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
     <style>
-        body { background-color: #f4f7f6; font-family: 'Apple SD Gothic Neo', sans-serif; display: flex; align-items: center; justify-content: center; height: 100vh; margin: 0; }
-        .login-card { background: white; padding: 40px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); width: 100%; max-width: 400px; text-align: center; }
+        body { 
+            background-color: #000; 
+            font-family: 'Apple SD Gothic Neo', sans-serif; 
+            display: flex; 
+            align-items: center; 
+            /* 💡 [핵심] 다시 오른쪽(flex-end)으로 정렬했음!! */
+            justify-content: flex-end; 
+            height: 100vh; 
+            margin: 0; 
+            /* 💡 [핵심] 오른쪽에서 10% 띄워서 영상 안 가리게 했음~ */
+            padding-right: 10%; 
+        }
+        
+        /* 🎬 [배경 동영상] 잘림 없이 전체 화면! */
+        #bg-video {
+            position: fixed; right: 0; bottom: 0;
+            min-width: 100%; min-height: 100%;
+            z-index: -1; 
+            object-fit: contain; 
+            filter: brightness(0.6); 
+        }
+
+        /* 🍎 [애플 감성] 반투명 유리 효과 */
+        .login-card { 
+            background: rgba(255, 255, 255, 0.85); 
+            backdrop-filter: blur(10px); 
+            padding: 40px; border-radius: 20px; 
+            box-shadow: 0 15px 35px rgba(0,0,0,0.3); 
+            width: 100%; max-width: 400px; text-align: center; 
+            /* 💡 등장할 때 스무스하게 옆에서 튀어나오게 했음! */
+            animation: fadeInRight 0.8s ease-out;
+        }
+
+        @keyframes fadeInRight {
+            from { opacity: 0; transform: translateX(20px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+        
         .btn-primary { background-color: #007aff; border: none; font-weight: bold; padding: 12px; border-radius: 10px; }
         .btn-primary:hover { background-color: #005bb5; }
-        .form-control { border-radius: 10px; padding: 12px; margin-bottom: 15px; }
+        
+        input[type="text"].form-control {
+            border-radius: 10px !important; padding: 12px 15px !important; margin-bottom: 15px !important;
+        }
+
+        /* 💡 [눈알 픽스] 절대 안 깨지는 껍데기 구조 */
+        .gym-input-wrapper {
+            display: flex; align-items: center; 
+            border: 1px solid #ced4da; border-radius: 10px; 
+            background-color: #fff; margin-bottom: 15px; overflow: hidden;
+        }
+        
+        .gym-input-wrapper:focus-within {
+            border-color: #86b7fe; box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+        }
+
+        .gym-input-wrapper input {
+            border: none !important; box-shadow: none !important;
+            padding: 12px 15px; flex-grow: 1; outline: none; margin-bottom: 0 !important;
+        }
+
+        .gym-input-wrapper .eye-btn {
+            width: 50px; display: flex; justify-content: center; align-items: center;
+            padding: 12px 0; color: #6c757d; cursor: pointer; background-color: transparent;
+        }
+        .gym-input-wrapper .eye-btn:hover { color: #007aff; }
+
     </style>
 </head>
 <body>
+
+    <video autoplay loop muted playsinline id="bg-video">
+        <source src="/images/gym-bg.mp4" type="video/mp4">
+    </video>
 
     <div class="login-card">
         <h2 class="mb-4 text-primary fw-bold">🔥 Gym Tracker</h2>
         <p class="text-muted mb-4">오늘도 득근하러 오셨군요!</p>
         
+        <div th:if="${param.error}" class="alert alert-danger py-2 mb-3 text-start" style="font-size: 0.9rem; border-radius: 10px;">
+            <strong>🚫 헬스장 입구컷!</strong><br>
+            아이디나 비밀번호가 틀렸습니다. 다시 확인해주세요! 💦
+        </div>
+        <div th:if="${param.logout}" class="alert alert-info py-2 mb-3 text-start" style="font-size: 0.9rem; border-radius: 10px;">
+            <strong>👋 오운완 수고하셨습니다!</strong><br>
+            성공적으로 로그아웃 되었습니다. 득근하세요!
+        </div>
+        
         <form action="/login" method="post">
             <input type="text" name="username" class="form-control" placeholder="아이디" required>
-            <input type="password" name="password" class="form-control" placeholder="비밀번호" required>
+            
+            <div class="gym-input-wrapper">
+                <input type="password" id="password" name="password" placeholder="비밀번호" required>
+                <div class="eye-btn" onclick="togglePassword('password', 'eyeIconLogin')">
+                    <i class="bi bi-eye" id="eyeIconLogin" style="font-size: 1.1rem;"></i>
+                </div>
+            </div>
             
             <button type="submit" class="btn btn-primary w-100 mt-3">로그인 🚀</button>
         </form>
@@ -31,5 +113,20 @@
         </div>
     </div>
 
+    <script>
+        function togglePassword(inputId, iconId) {
+            const input = document.getElementById(inputId);
+            const icon = document.getElementById(iconId);
+            if (input.type === 'password') {
+                input.type = 'text';
+                icon.classList.remove('bi-eye');
+                icon.classList.add('bi-eye-slash');
+            } else {
+                input.type = 'password';
+                icon.classList.remove('bi-eye-slash');
+                icon.classList.add('bi-eye');
+            }
+        }
+    </script>
 </body>
 </html>

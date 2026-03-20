@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
 <head>
     <meta charset="UTF-8">
     <title>바디프로필 가즈아! 💪</title>
@@ -26,7 +26,16 @@
 </head>
 <body class="py-5">
     <div class="container">
-        <h2 class="text-center mb-4">🔥 6월 바디프로필 성공 기원 로그</h2>
+        <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="m-0 text-center flex-grow-1">🔥 6월 바디프로필 성공 기원 로그</h2>
+        
+        <div class="text-end">
+            <span class="fw-bold text-primary me-2"><span th:text="${nickname}">회원</span>님 득근하세요! 💪</span>
+            <form th:action="@{/logout}" method="post" class="d-inline">
+                <button type="submit" class="btn btn-sm btn-outline-danger fw-bold">로그아웃 🏃‍♂️</button>
+            </form>
+        </div>
+    </div>
 
         <ul class="nav nav-pills justify-content-center mb-4">
             <li class="nav-item"><button class="nav-link active" id="tab-weight" onclick="switchView('weight')">🏋️‍♂️ 웨이트</button></li>
