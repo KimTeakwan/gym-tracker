@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>짐 트래커 - 회원가입 💪</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body { background-color: #f4f7f6; font-family: 'Apple SD Gothic Neo', sans-serif; display: flex; align-items: center; justify-content: center; height: 100vh; margin: 0; }
+        .signup-card { background: white; padding: 40px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); width: 100%; max-width: 400px; text-align: center; }
+        .btn-primary { background-color: #007aff; border: none; font-weight: bold; padding: 12px; border-radius: 10px; }
+        .btn-primary:hover { background-color: #005bb5; }
+        .form-control { border-radius: 10px; padding: 12px; margin-bottom: 15px; }
+    </style>
+</head>
+<body>
+
+    <div class="signup-card">
+        <h2 class="mb-4 text-primary fw-bold">🔥 Gym Tracker</h2>
+        <p class="text-muted mb-4">6월 바프의 기적, 지금 시작하세요!</p>
+        
+        <form action="/api/members/add" method="post" onsubmit="return validatePassword()">
+            <input type="text" name="username" class="form-control" placeholder="사용할 아이디 입력" required>
+            
+            <input type="password" id="password" name="password" class="form-control" placeholder="비밀번호 입력" required>
+            
+            <input type="password" id="passwordConfirm" class="form-control" placeholder="비밀번호 한 번 더 확인!" required>
+            
+            <input type="text" name="nickname" class="form-control" placeholder="멋진 닉네임 (예: 헬창아저씨)" required>
+            
+            <button type="submit" class="btn btn-primary w-100 mt-3">근성장 시작하기 🚀</button>
+        </form>
+        
+        <div class="mt-4 small">
+            이미 회원이신가요? <a th:href="@{/login}" class="text-decoration-none fw-bold">로그인하러 가기</a>
+        </div>
+    </div>
+
+    <script>
+        function validatePassword() {
+            const pwd = document.getElementById('password').value;
+            const pwdConfirm = document.getElementById('passwordConfirm').value;
+            
+            if(pwd !== pwdConfirm) {
+                // 두 개가 다르면 경고창 띄우고 전송 중단! 😱
+                alert('비밀번호가 서로 다릅니다! 다시 확인해주세요! 🏋️‍♂️💦');
+                document.getElementById('passwordConfirm').focus(); // 커서를 확인 칸으로 이동!
+                return false; 
+            }
+            // 똑같으면 무사 통과! 🚀
+            return true; 
+        }
+    </script>
+</body>
+</html>
