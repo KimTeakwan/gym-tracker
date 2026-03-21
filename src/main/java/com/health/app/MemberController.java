@@ -24,24 +24,40 @@ public class MemberController {
     // ✨ [추가] 메일을 실제로 쏴주는 비서를 고용했음!! 했음~ [cite: 2026-01-11]
     private final MailService mailService; 
 
-    @PostMapping("/signup") // 💡 GetMapping에서 PostMapping으로 변경!!
+    // 1. 회원가입 페이지 보여주기 (GET) 했음~
+    @GetMapping("/signup")
+    public String signupForm(org.springframework.ui.Model model) { // Model 임포트 대신 풀네임 썼음!
+        model.addAttribute("member", new Member());
+        return "signup";
+    }
+
+    // 2. [통합] 회원가입 처리 로직 (유효성 검사 + 이메일 인증) 했음~
+    @PostMapping("/signup")
     public String register(@Valid @ModelAttribute("member") Member member, BindingResult result) {
-    
-    // 1. 유효성 검사 
-    if (result.hasErrors()) {
-        return "signup"; 
+        
+        // [검사] 이모티콘 빌런이나 글자 수 미달 컷!! 했음~
+        if (result.hasErrors()) {
+            return "signup";
+        }
+
+        // [보안] 비밀번호 암호화 가즈아!! 했음~
+        member.setPassword(passwordEncoder.encode(member.getPassword()));
+        
+        // [인증] 이메일 인증 코드 생성 및 계정 잠금 했음~
+        String code = UUID.randomUUID().toString();
+        member.setVerificationCode(code);
+        member.setEnabled(false);
+        
+        // [저장] TiDB에 관원 등록!! 했음~
+        memberRepository.save(member);
+        
+        // [발송] 진짜 메일 쏴주기!! 했음~
+        mailService.sendVerificationEmail(member.getEmail(), code);
+        
+        return "redirect:/login?verifyEmail";
     }
 
-    // 2. 비밀번호 암호화 (BCrypt 사용)
-    String encodedPassword = passwordEncoder.encode(member.getPassword());
-    member.setPassword(encodedPassword);
-
-    memberRepository.save(member);
-
-    // 4. 가입 성공 시 로그인 페이지로 이동!!
-    return "redirect:/login";
-    }
-
+    // 3. 로그인 페이지 보여주기 했음~
     @GetMapping("/login")
     public String loginForm() {
         return "login";
