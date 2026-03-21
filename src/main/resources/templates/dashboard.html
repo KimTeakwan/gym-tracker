@@ -25,11 +25,22 @@
 </head>
 <body class="py-5">
     <div class="container">
-        <div class="d-flex justify-content-between align-items-center mb-4">
-            <h2 class="m-0 text-center flex-grow-1">🔥 6월 바디프로필 성공 기원 로그</h2>
-            <div class="text-end">
-                <span class="fw-bold text-primary me-2"><span th:text="${nickname}">회원</span>님 득근하세요! 💪</span>
-                <form th:action="@{/logout}" method="post" class="d-inline">
+        
+        <div class="d-flex justify-content-between align-items-start mb-4">
+            <div style="width: 100px;"></div> 
+            
+            <div class="text-center flex-grow-1">
+                <h2 class="m-0 fw-bold">🔥 6월 바디프로필 성공 기원 로그</h2>
+                <div class="mt-2">
+                    <span id="todayWorkoutCount" class="badge rounded-pill bg-success fs-6 shadow-sm px-3 py-2">
+                        로딩중... 🏃‍♂️
+                    </span>
+                </div>
+            </div>
+            
+            <div class="text-end" style="width: 100px;">
+                <span class="fw-bold text-primary d-block mb-1"><span th:text="${nickname}">회원</span>님 득근! 💪</span>
+                <form th:action="@{/logout}" method="post">
                     <button type="submit" class="btn btn-sm btn-outline-danger fw-bold">로그아웃 🏃‍♂️</button>
                 </form>
             </div>
@@ -237,46 +248,32 @@
 
         // 3. 유산소 실시간 트래커
         let cInterval, cSec = 0;
-        
         function startCardio() {
-            // 버튼 상태 변경
             document.getElementById('cardioStartBtn').disabled = true;
             document.getElementById('cardioStopBtn').disabled = false;
-            
             cInterval = setInterval(() => {
                 cSec++;
+                document.getElementById('cardioTimer').innerText = `${Math.floor(cSec/60).toString().padStart(2,'0')}:${(cSec%60).toString().padStart(2,'0')}`;
                 
-                // 시간 초 업데이트
-                document.getElementById('cardioTimer').innerText = 
-                    `${Math.floor(cSec/60).toString().padStart(2,'0')}:${(cSec%60).toString().padStart(2,'0')}`;
-                
-                // ✨ [핵심 수정] cardioIntensity가 아니라 cardioSpeed를 가져와야 에러가 안 남!! 했음~
                 const speedInput = document.getElementById('cardioSpeed');
                 const speed = speedInput ? parseFloat(speedInput.value) || 0 : 0;
-                
-                // 칼로리 계산 (속도 * 75kg * 시간 * 1.05) [cite: 2026-03-15]
                 const cal = (speed * 75 * (cSec / 3600) * 1.05).toFixed(1);
-                
                 document.getElementById('cardioCalories').innerText = `🔥 ${cal} kcal`;
             }, 1000);
         }
 
         function stopCardio() {
             clearInterval(cInterval);
-            
-            // ✨ [핵심 수정] 저장할 때도 cardioSpeed에서 값을 가져옴!! 했음~
             const speedInput = document.getElementById('cardioSpeed');
             const speedVal = speedInput ? parseFloat(speedInput.value) || 0 : 0;
-            
             const cardioData = {
                 type: document.getElementById('cardioType').value,
                 speed: speedVal, 
-                name: document.getElementById('cardioType').value, // DB 에러 방지용 [cite: 2026-03-21]
+                name: document.getElementById('cardioType').value, 
                 durationSeconds: cSec,
                 calories: parseFloat((speedVal * 75 * (cSec / 3600) * 1.05).toFixed(1))
             };
 
-            // 서버로 데이터 쏘기!! 했음~
             fetch('/api/cardio', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -284,50 +281,46 @@
             })
             .then(response => {
                 if(response.ok) {
-                    alert("유산소 완료! 오늘도 수고하셨음~ 💪");
-                    // 저장 후 유산소 탭으로 바로 새로고침!! 했음~ [cite: 2026-03-20]
+                    alert("유산소 완료! 💪");
                     location.href = "/dashboard?tab=cardio"; 
-                } else {
-                    alert("저장 실패!! 서버 에러(500)를 확인하셈!! 😡");
                 }
-            })
-            .catch(error => {
-                console.error("통신 에러남!!", error);
             });
         }
 
-        // 4. 세션 제어 로직 (잠금 및 해제) ✨ [핵심 추가]
+        // 4. 세션 제어 로직 (잠금 및 해제) 
         function toggleExerciseControls(isEnabled) {
-            // 종목 추가 입력창 & 버튼
-            document.getElementById('inputName').disabled = !isEnabled;
-            document.getElementById('inputCategory').disabled = !isEnabled;
-            document.getElementById('inputWeight').disabled = !isEnabled;
-            document.getElementById('inputReps').disabled = !isEnabled;
-            document.getElementById('inputSets').disabled = !isEnabled;
-            document.getElementById('addRecordBtn').disabled = !isEnabled;
-            
-            // 퀵 버튼들
+            const ids = ['inputName', 'inputCategory', 'inputWeight', 'inputReps', 'inputSets', 
+                         'addRecordBtn', 'restInput', 'timerCustomBtn', 'timer1MinBtn', 'timerResetBtn'];
+            ids.forEach(id => { if(document.getElementById(id)) document.getElementById(id).disabled = !isEnabled; });
             document.querySelectorAll('.quick-btn').forEach(btn => btn.disabled = !isEnabled);
-            
-            // 타이머 제어부
-            document.getElementById('restInput').disabled = !isEnabled;
-            document.getElementById('timerCustomBtn').disabled = !isEnabled;
-            document.getElementById('timer1MinBtn').disabled = !isEnabled;
-            document.getElementById('timerResetBtn').disabled = !isEnabled;
         }
 
-        // 5. 세션 시계 로직 & 자동 폼 채우기
+        // ✨ 5. [수정 완료] 친구가 요청한 문구 형태로 데이터 업데이트!! 했음~
+        function fetchTodayCount() {
+            fetch('/api/stats/today')
+                .then(response => response.json())
+                .then(data => {
+                    const badge = document.getElementById('todayWorkoutCount');
+                    if (badge) {
+                        // 💡 "2026-03-21 오운완 32명" 스타일로 정확하게 꽂아줌!! 했음~
+                        badge.innerText = `${data.date} 오운완 ${data.count}명`;
+                    }
+                })
+                .catch(err => console.error("오운완 카운트 통신 에러!", err));
+        }
+
+        // 6. 세션 시계 로직 & 자동 폼 채우기 & 실시간 폴링 시작
         let sessionInterval;
         window.onload = function() { 
             const s = localStorage.getItem('sessionStartTime'); 
-            if(s) {
-                resumeSession(new Date(parseInt(s))); 
-            }
+            if(s) { resumeSession(new Date(parseInt(s))); }
             
             const urlParams = new URLSearchParams(window.location.search);
-            if (urlParams.get('tab') === 'cardio') {
-                switchView('cardio');
-            }
+            if (urlParams.get('tab') === 'cardio') { switchView('cardio'); }
+            
+            // 화면 켜지자마자 호출하고, 5초마다 계속 업데이트!! 했음~
+            fetchTodayCount();
+            setInterval(fetchTodayCount, 5000);
         };
 
         function quickFill(n, c, w, r, s) { 
@@ -341,7 +334,6 @@
         function startSession() { 
             const s = new Date().getTime(); 
             localStorage.setItem('sessionStartTime', s); 
-            // ✨ 시작 시 컨트롤 해제!! 했음~
             toggleExerciseControls(true);
             resumeSession(new Date(s)); 
         }
@@ -349,7 +341,6 @@
         function resumeSession(s) { 
             document.getElementById('startBtn').disabled = true; 
             document.getElementById('endBtn').disabled = false;
-            // ✨ 세션 복구 시 컨트롤 해제!! 했음~
             toggleExerciseControls(true);
             sessionInterval = setInterval(() => { 
                 const d = new Date(new Date() - s); 
@@ -363,7 +354,6 @@
         function endSession() { 
             clearInterval(sessionInterval); 
             localStorage.removeItem('sessionStartTime'); 
-            // ✨ 종료 시 다시 잠금!! 했음~
             toggleExerciseControls(false);
             location.reload(); 
         }
