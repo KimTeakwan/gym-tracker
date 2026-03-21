@@ -1,9 +1,11 @@
+server:
+  port: 80  # 💡 이게 있어야 주소창에서 숫자가 사라짐!! 했음~
+
 spring:
   # 🏗️ 1. 데이터베이스(TiDB Cloud) 설정 했음~ [cite: 2026-02-19]
   datasource:
     url: jdbc:mysql://gateway01.ap-northeast-1.prod.aws.tidbcloud.com:4000/test?useSSL=true&verifyServerCertificate=true
     username: 2EBXp9bbFQWPD6t.root
-    # 💡 [필독] 진짜 비밀번호를 ' ' 안에 직접 넣어야 에러 안 남!
     password: '${TIDB_PASSWORD}' 
 
     hikari:
@@ -20,7 +22,6 @@ spring:
     properties:
       hibernate:
         format_sql: true
-        # TiDB와 찰떡궁합인 방언 설정임! [cite: 2026-02-19]
         dialect: org.hibernate.dialect.MySQLDialect
 
   # 📩 3. 이메일 인증 서버 설정 했음~ [cite: 2026-03-20]
@@ -39,3 +40,6 @@ spring:
   # 🎨 4. 화면 수정 바로 반영되게 캐시 껐음~ 했음!
   thymeleaf:
     cache: false
+
+app:
+  url: http://54.174.197.73  # 💡 카페 피드백 반영 완료!! 했음~

@@ -83,4 +83,15 @@ public class WorkoutViewController {
         
         return data;
     }
+
+    @GetMapping("/login")
+    public String login() {
+        return "login"; // templates/login.html 파일로 연결!! 했음~
+    }
+
+    // 2. IP 주소만 쳤을 때(/) 404 안 뜨게 메인 화면(index)으로 연결!!
+    @GetMapping("/")
+    public String index() {
+        return "index"; // templates/index.html 파일로 연결!! 했음~
+    }
 }

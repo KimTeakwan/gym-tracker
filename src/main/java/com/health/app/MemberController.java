@@ -3,6 +3,7 @@ package com.health.app;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Controller;
+import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -10,6 +11,8 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.view.RedirectView;
 import java.util.UUID;
 import com.health.app.MailService;
+
+import jakarta.validation.Valid;
 
 @Controller
 @RequiredArgsConstructor
@@ -21,9 +24,22 @@ public class MemberController {
     // ✨ [추가] 메일을 실제로 쏴주는 비서를 고용했음!! 했음~ [cite: 2026-01-11]
     private final MailService mailService; 
 
-    @GetMapping("/signup")
-    public String signupForm() {
+    @PostMapping("/signup") // 💡 GetMapping에서 PostMapping으로 변경!!
+    public String register(@Valid @ModelAttribute("member") Member member, BindingResult result) {
+    
+    // 1. 유효성 검사 
+    if (result.hasErrors()) {
         return "signup"; 
+    }
+
+    // 2. 비밀번호 암호화 (BCrypt 사용)
+    String encodedPassword = passwordEncoder.encode(member.getPassword());
+    member.setPassword(encodedPassword);
+
+    memberRepository.save(member);
+
+    // 4. 가입 성공 시 로그인 페이지로 이동!!
+    return "redirect:/login";
     }
 
     @GetMapping("/login")
