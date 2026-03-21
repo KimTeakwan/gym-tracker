@@ -69,22 +69,22 @@
                         <div class="card main-card p-4 h-100 shadow-sm">
                             <h5 class="mb-3 text-primary fw-bold">📝 종목 추가하기</h5>
                             <div class="mb-3">
-                                <button type="button" class="btn btn-sm btn-outline-secondary quick-btn" onclick="quickFill('벤치프레스', '가슴', 60, 10, 3)">가슴 벤치</button>
-                                <button type="button" class="btn btn-sm btn-outline-secondary quick-btn" onclick="quickFill('데드리프트', '등', 100, 5, 3)">등 데드</button>
-                                <button type="button" class="btn btn-sm btn-outline-secondary quick-btn" onclick="quickFill('스쿼트', '하체', 80, 8, 3)">하체 스쿼트</button>
+                                <button type="button" class="btn btn-sm btn-outline-secondary quick-btn" onclick="quickFill('벤치프레스', '가슴', 60, 10, 3)" disabled>가슴 벤치</button>
+                                <button type="button" class="btn btn-sm btn-outline-secondary quick-btn" onclick="quickFill('데드리프트', '등', 100, 5, 3)" disabled>등 데드</button>
+                                <button type="button" class="btn btn-sm btn-outline-secondary quick-btn" onclick="quickFill('스쿼트', '하체', 80, 8, 3)" disabled>하체 스쿼트</button>
                             </div>
                             <div class="row g-2 align-items-center">
-                                <div class="col-md-3"><input type="text" id="inputName" name="name" class="form-control" placeholder="운동 종목" required></div>
+                                <div class="col-md-3"><input type="text" id="inputName" name="name" class="form-control" placeholder="운동 종목" required disabled></div>
                                 <div class="col-md-3">
-                                    <select id="inputCategory" name="category" class="form-select">
+                                    <select id="inputCategory" name="category" class="form-select" disabled>
                                         <option value="가슴">가슴</option><option value="등">등</option><option value="하체">하체</option><option value="어깨">어깨</option><option value="팔">팔</option>
                                     </select>
                                 </div>
-                                <div class="col-md-2"><input type="number" id="inputWeight" name="weight" class="form-control text-center" placeholder="kg" required></div>
-                                <div class="col-md-2"><input type="number" id="inputReps" name="reps" class="form-control text-center" placeholder="회" required></div>
-                                <div class="col-md-2"><input type="number" id="inputSets" name="sets" class="form-control text-center" placeholder="세트" required></div>
+                                <div class="col-md-2"><input type="number" id="inputWeight" name="weight" class="form-control text-center" placeholder="kg" required disabled></div>
+                                <div class="col-md-2"><input type="number" id="inputReps" name="reps" class="form-control text-center" placeholder="회" required disabled></div>
+                                <div class="col-md-2"><input type="number" id="inputSets" name="sets" class="form-control text-center" placeholder="세트" required disabled></div>
                                 <input type="hidden" name="durationMinutes" id="durationMinutes" value="0">
-                                <div class="col-md-12 mt-3"><button type="submit" class="btn btn-primary w-100 fw-bold">기록 추가 🚀</button></div>
+                                <div class="col-md-12 mt-3"><button type="submit" id="addRecordBtn" class="btn btn-primary w-100 fw-bold" disabled>기록 추가 🚀</button></div>
                             </div>
                         </div>
                     </div>
@@ -96,12 +96,12 @@
                                 <div id="timerDisplay">00:00</div>
                             </div>
                             <div class="input-group input-group-sm mb-3 mx-auto" style="max-width: 150px;">
-                                <input type="number" id="restInput" class="form-control" placeholder="초 입력" min="1">
-                                <button class="btn btn-primary" type="button" onclick="startCustomRest()">시작</button>
+                                <input type="number" id="restInput" class="form-control" placeholder="초 입력" min="1" disabled>
+                                <button id="timerCustomBtn" class="btn btn-primary" type="button" onclick="startCustomRest()" disabled>시작</button>
                             </div>
                             <div class="d-flex justify-content-center gap-2">
-                                <button type="button" class="btn btn-sm btn-outline-primary" onclick="startTimer(60)">1분</button>
-                                <button type="button" class="btn btn-sm btn-danger" onclick="resetTimer()">리셋</button>
+                                <button id="timer1MinBtn" type="button" class="btn btn-sm btn-outline-primary" onclick="startTimer(60)" disabled>1분</button>
+                                <button id="timerResetBtn" type="button" class="btn btn-sm btn-danger" onclick="resetTimer()" disabled>리셋</button>
                             </div>
                         </div>
                     </div>
@@ -116,12 +116,12 @@
                 </div>
                 <div class="card main-card p-3 shadow-sm">
                     <table class="table text-center align-middle">
-                        <thead><tr><th>종목</th><th>상세</th><th>총 볼륨</th><th>관리</th></tr></thead>
+                        <thead><tr><th>종목</th><th>상세</th><th>기록 일시</th><th>관리</th></tr></thead>
                         <tbody>
                             <tr th:each="w : ${entry.value}">
                                 <td class="fw-bold" th:text="${w.name}"></td>
                                 <td th:text="${w.weight} + 'kg x ' + ${w.reps} + '회 x ' + ${w.sets} + '세트'"></td>
-                                <td class="text-primary fw-bold" th:text="${w.totalVolume}"></td>
+                                <td class="small text-muted fw-bold" th:text="${w.formattedDateTime}"></td>
                                 <td><a th:href="@{/api/workouts/delete/{id}(id=${w.id})}" class="btn btn-sm btn-outline-danger">삭제</a></td>
                             </tr>
                         </tbody>
@@ -143,12 +143,8 @@
                         </select>
                     </div>
                     <div class="col-md-4">
-                        <label class="fw-bold">강도</label>
-                        <select id="cardioIntensity" class="form-select">
-                            <option value="3.5">저강도</option>
-                            <option value="7.0" selected>중강도</option>
-                            <option value="10.5">고강도</option>
-                        </select>
+                        <label class="fw-bold">운동 속도 (km/h)</label>
+                        <input type="number" id="cardioSpeed" class="form-control text-center" placeholder="속도 입력" step="0.1" value="6.0">
                     </div>
                 </div>
                 <div class="cardio-display mb-4">
@@ -168,13 +164,12 @@
                 <div class="card main-card p-3 shadow-sm">
                     <table class="table text-center align-middle">
                         <thead class="table-light">
-                            <tr><th>종목</th><th>강도</th><th>운동 시간(초)</th><th>소모 칼로리</th><th>기록 일시</th><th>관리</th></tr>
+                            <tr><th>종목</th><th>속도(km/h)</th><th>운동 시간(초)</th><th>소모 칼로리</th><th>기록 일시</th><th>관리</th></tr>
                         </thead>
                         <tbody>
                             <tr th:each="c : ${cardioWorkouts}">
                                 <td class="fw-bold" th:text="${c.type}"></td>
-                                <td th:text="${c.intensity}"></td>
-                                <td th:text="${c.durationSeconds} + '초'"></td>
+                                <td th:text="${c.speed}"></td> <td th:text="${c.durationSeconds} + '초'"></td>
                                 <td class="text-danger fw-bold" th:text="${c.calories} + ' kcal'"></td>
                                 <td class="small text-muted fw-bold" th:text="${c.formattedDateTime}"></td>
                                 <td><a th:href="@{/api/cardio/delete/{id}(id=${c.id})}" class="btn btn-sm btn-outline-danger">삭제</a></td>
@@ -187,7 +182,7 @@
     </div>
 
     <script th:inline="javascript">
-        // 1. 화면 전환 (탭) - 기존 로직 유지했음~
+        // 1. 화면 전환 (탭)
         function switchView(view) {
             document.querySelectorAll('.view-section').forEach(s => s.classList.remove('active'));
             document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
@@ -200,7 +195,7 @@
             }
         }
 
-        // 2. 휴식 타이머 & 차트 로직 (기존 기능 100% 보존!! 했음~)
+        // 2. 휴식 타이머 & 차트 로직
         let tInt, total; 
         const circle = document.getElementById('progressCircle');
         const circum = circle ? 2 * Math.PI * 54 : 0;
@@ -242,27 +237,46 @@
 
         // 3. 유산소 실시간 트래커
         let cInterval, cSec = 0;
+        
         function startCardio() {
+            // 버튼 상태 변경
             document.getElementById('cardioStartBtn').disabled = true;
             document.getElementById('cardioStopBtn').disabled = false;
+            
             cInterval = setInterval(() => {
                 cSec++;
-                document.getElementById('cardioTimer').innerText = `${Math.floor(cSec/60).toString().padStart(2,'0')}:${(cSec%60).toString().padStart(2,'0')}`;
-                const met = parseFloat(document.getElementById('cardioIntensity').value);
-                const cal = (met * 75 * (cSec / 3600) * 1.05).toFixed(1);
+                
+                // 시간 초 업데이트
+                document.getElementById('cardioTimer').innerText = 
+                    `${Math.floor(cSec/60).toString().padStart(2,'0')}:${(cSec%60).toString().padStart(2,'0')}`;
+                
+                // ✨ [핵심 수정] cardioIntensity가 아니라 cardioSpeed를 가져와야 에러가 안 남!! 했음~
+                const speedInput = document.getElementById('cardioSpeed');
+                const speed = speedInput ? parseFloat(speedInput.value) || 0 : 0;
+                
+                // 칼로리 계산 (속도 * 75kg * 시간 * 1.05) [cite: 2026-03-15]
+                const cal = (speed * 75 * (cSec / 3600) * 1.05).toFixed(1);
+                
                 document.getElementById('cardioCalories').innerText = `🔥 ${cal} kcal`;
             }, 1000);
         }
 
         function stopCardio() {
             clearInterval(cInterval);
+            
+            // ✨ [핵심 수정] 저장할 때도 cardioSpeed에서 값을 가져옴!! 했음~
+            const speedInput = document.getElementById('cardioSpeed');
+            const speedVal = speedInput ? parseFloat(speedInput.value) || 0 : 0;
+            
             const cardioData = {
                 type: document.getElementById('cardioType').value,
-                intensity: document.getElementById('cardioIntensity').selectedOptions[0].text,
+                speed: speedVal, 
+                name: document.getElementById('cardioType').value, // DB 에러 방지용 [cite: 2026-03-21]
                 durationSeconds: cSec,
-                calories: parseFloat((parseFloat(document.getElementById('cardioIntensity').value) * 75 * (cSec / 3600) * 1.05).toFixed(1))
+                calories: parseFloat((speedVal * 75 * (cSec / 3600) * 1.05).toFixed(1))
             };
 
+            // 서버로 데이터 쏘기!! 했음~
             fetch('/api/cardio', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -270,34 +284,95 @@
             })
             .then(response => {
                 if(response.ok) {
-                    alert("유산소 완료! 오늘도 수고하셨습니다. 💪");
-                    // ✨ [핵심 수정] 저장 후 즉시 유산소 탭으로 리다이렉트!! 했음~
+                    alert("유산소 완료! 오늘도 수고하셨음~ 💪");
+                    // 저장 후 유산소 탭으로 바로 새로고침!! 했음~ [cite: 2026-03-20]
                     location.href = "/dashboard?tab=cardio"; 
+                } else {
+                    alert("저장 실패!! 서버 에러(500)를 확인하셈!! 😡");
                 }
+            })
+            .catch(error => {
+                console.error("통신 에러남!!", error);
             });
         }
 
-        // 4. 세션 복구 및 초기 탭 설정 로직
+        // 4. 세션 제어 로직 (잠금 및 해제) ✨ [핵심 추가]
+        function toggleExerciseControls(isEnabled) {
+            // 종목 추가 입력창 & 버튼
+            document.getElementById('inputName').disabled = !isEnabled;
+            document.getElementById('inputCategory').disabled = !isEnabled;
+            document.getElementById('inputWeight').disabled = !isEnabled;
+            document.getElementById('inputReps').disabled = !isEnabled;
+            document.getElementById('inputSets').disabled = !isEnabled;
+            document.getElementById('addRecordBtn').disabled = !isEnabled;
+            
+            // 퀵 버튼들
+            document.querySelectorAll('.quick-btn').forEach(btn => btn.disabled = !isEnabled);
+            
+            // 타이머 제어부
+            document.getElementById('restInput').disabled = !isEnabled;
+            document.getElementById('timerCustomBtn').disabled = !isEnabled;
+            document.getElementById('timer1MinBtn').disabled = !isEnabled;
+            document.getElementById('timerResetBtn').disabled = !isEnabled;
+        }
+
+        // 5. 세션 시계 로직 & 자동 폼 채우기
         let sessionInterval;
         window.onload = function() { 
             const s = localStorage.getItem('sessionStartTime'); 
-            if(s) resumeSession(new Date(parseInt(s))); 
+            if(s) {
+                resumeSession(new Date(parseInt(s))); 
+            }
             
-            // 💡 서버에서 파라미터를 못 받았을 경우를 대비한 2중 방어벽임!! 했음~
             const urlParams = new URLSearchParams(window.location.search);
             if (urlParams.get('tab') === 'cardio') {
                 switchView('cardio');
             }
         };
 
-        function quickFill(n, c, w, r, s) { document.getElementById('inputName').value = n; document.getElementById('inputCategory').value = c; document.getElementById('inputWeight').value = w; document.getElementById('inputReps').value = r; document.getElementById('inputSets').value = s; }
-        function startSession() { const s = new Date().getTime(); localStorage.setItem('sessionStartTime', s); resumeSession(new Date(s)); }
-        function resumeSession(s) { 
-            document.getElementById('startBtn').disabled = true; document.getElementById('endBtn').disabled = false;
-            sessionInterval = setInterval(() => { const d = new Date(new Date() - s); document.getElementById('sessionClock').innerText = d.getUTCHours().toString().padStart(2,'0') + ":" + d.getUTCMinutes().toString().padStart(2,'0') + ":" + d.getUTCSeconds().toString().padStart(2,'0'); }, 1000); 
+        function quickFill(n, c, w, r, s) { 
+            document.getElementById('inputName').value = n; 
+            document.getElementById('inputCategory').value = c; 
+            document.getElementById('inputWeight').value = w; 
+            document.getElementById('inputReps').value = r; 
+            document.getElementById('inputSets').value = s; 
         }
-        function endSession() { clearInterval(sessionInterval); localStorage.removeItem('sessionStartTime'); location.reload(); }
-        function saveSessionState() { const s = localStorage.getItem('sessionStartTime'); if(s) document.getElementById('durationMinutes').value = Math.max(1, Math.floor((new Date() - parseInt(s)) / 60000)); }
+
+        function startSession() { 
+            const s = new Date().getTime(); 
+            localStorage.setItem('sessionStartTime', s); 
+            // ✨ 시작 시 컨트롤 해제!! 했음~
+            toggleExerciseControls(true);
+            resumeSession(new Date(s)); 
+        }
+
+        function resumeSession(s) { 
+            document.getElementById('startBtn').disabled = true; 
+            document.getElementById('endBtn').disabled = false;
+            // ✨ 세션 복구 시 컨트롤 해제!! 했음~
+            toggleExerciseControls(true);
+            sessionInterval = setInterval(() => { 
+                const d = new Date(new Date() - s); 
+                document.getElementById('sessionClock').innerText = 
+                    d.getUTCHours().toString().padStart(2,'0') + ":" + 
+                    d.getUTCMinutes().toString().padStart(2,'0') + ":" + 
+                    d.getUTCSeconds().toString().padStart(2,'0'); 
+            }, 1000); 
+        }
+
+        function endSession() { 
+            clearInterval(sessionInterval); 
+            localStorage.removeItem('sessionStartTime'); 
+            // ✨ 종료 시 다시 잠금!! 했음~
+            toggleExerciseControls(false);
+            location.reload(); 
+        }
+
+        function saveSessionState() { 
+            const s = localStorage.getItem('sessionStartTime'); 
+            if(s) document.getElementById('durationMinutes').value = 
+                Math.max(1, Math.floor((new Date() - parseInt(s)) / 60000)); 
+        }
     </script>
 </body>
 </html>
