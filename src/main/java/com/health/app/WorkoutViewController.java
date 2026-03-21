@@ -80,13 +80,8 @@ public class WorkoutViewController {
         // 나중에 진짜 서비스할 때는 `+ 30` 지우고 `todayVisitors.size()`만 쓰셈!!
         int totalCount = todayVisitors.size(); 
         data.put("count", totalCount); 
-        
-        return data;
-    }
 
-    @GetMapping("/login")
-    public String login() {
-        return "login"; // templates/login.html 파일로 연결!! 했음~
+        return data;
     }
 
     // 2. IP 주소만 쳤을 때(/) 404 안 뜨게 메인 화면(index)으로 연결!!
