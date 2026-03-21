@@ -42,15 +42,14 @@
         .btn-primary { background-color: #007aff; border: none; font-weight: bold; padding: 12px; border-radius: 10px; }
         .btn-primary:hover { background-color: #005bb5; }
         
-        /* 💡 입력창 세로 배치 유지 했음~ */
         input.form-control {
-            border-radius: 10px !important; padding: 12px 15px !important; margin-bottom: 15px !important;
+            border-radius: 10px !important; padding: 12px 15px !important; margin-bottom: 5px !important; /* 💡 간격 살짝 조정했음! */
             display: block; width: 100%;
         }
 
         .gym-input-wrapper {
             display: flex; align-items: center; border: 1px solid #ced4da;
-            border-radius: 10px; background-color: #fff; margin-bottom: 15px; overflow: hidden; 
+            border-radius: 10px; background-color: #fff; margin-bottom: 5px; overflow: hidden; 
         }
         .gym-input-wrapper:focus-within {
             border-color: #86b7fe; box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
@@ -64,6 +63,11 @@
             color: #6c757d; cursor: pointer; background-color: transparent;
         }
         .gym-input-wrapper .eye-btn:hover { color: #007aff; }
+
+        /* 💡 에러 메시지 스타일 추가했음~ */
+        .error-msg {
+            color: #dc3545; font-size: 0.8rem; text-align: left; margin-left: 5px; margin-bottom: 10px;
+        }
     </style>
 </head>
 <body>
@@ -76,17 +80,21 @@
         <h2 class="mb-4 text-primary fw-bold">🔥 Gym Tracker</h2>
         <p class="text-muted mb-4">6월 바프의 기적, 지금 시작하세요!</p>
         
-        <form action="/api/members/add" method="post" onsubmit="return validatePassword()">
-            <input type="text" name="username" class="form-control" placeholder="사용할 아이디 입력" required>
+        <form th:action="@{/signup}" th:object="${member}" method="post" onsubmit="return validatePassword()">
+            
+            <input type="text" th:field="*{username}" class="form-control" placeholder="사용할 아이디 입력">
+            <div th:if="${#fields.hasErrors('username')}" th:errors="*{username}" class="error-msg"></div>
 
-            <input type="email" name="email" class="form-control" placeholder="인증받을 이메일 주소 (예: gym@google.com)" required>
+            <input type="email" th:field="*{email}" class="form-control" placeholder="인증받을 이메일 주소">
+            <div th:if="${#fields.hasErrors('email')}" th:errors="*{email}" class="error-msg"></div>
 
             <div class="gym-input-wrapper">
-                <input type="password" id="password" name="password" placeholder="비밀번호 입력" required>
+                <input type="password" id="password" th:field="*{password}" placeholder="비밀번호 입력">
                 <div class="eye-btn" onclick="togglePassword('password', 'eyeIconPwd')">
                     <i class="bi bi-eye" id="eyeIconPwd"></i>
                 </div>
             </div>
+            <div th:if="${#fields.hasErrors('password')}" th:errors="*{password}" class="error-msg"></div>
             
             <div class="gym-input-wrapper">
                 <input type="password" id="passwordConfirm" placeholder="비밀번호 한 번 더 확인!" required>
@@ -95,7 +103,8 @@
                 </div>
             </div>
             
-            <input type="text" name="nickname" class="form-control" placeholder="멋진 닉네임 (예: 헬창아저씨)" required>
+            <input type="text" th:field="*{nickname}" class="form-control" placeholder="멋진 닉네임">
+            <div th:if="${#fields.hasErrors('nickname')}" th:errors="*{nickname}" class="error-msg"></div>
             
             <button type="submit" class="btn btn-primary w-100 mt-3">근성장 시작하기 🚀</button>
         </form>
@@ -106,7 +115,6 @@
     </div>
 
     <script>
-        // 💡 기존 로직 100% 유지 했음~ [cite: 2026-03-20]
         function validatePassword() {
             const pwd = document.getElementById('password').value;
             const pwdConfirm = document.getElementById('passwordConfirm').value;

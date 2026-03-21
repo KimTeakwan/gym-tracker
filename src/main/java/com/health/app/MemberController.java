@@ -8,11 +8,9 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.servlet.view.RedirectView;
+import org.springframework.ui.Model; // 💡 명시적으로 임포트 추가했음!
 import java.util.UUID;
-import com.health.app.MailService;
-
-import jakarta.validation.Valid;
+import jakarta.validation.Valid; // 💡 심판(유효성 검사) 도구 했음~
 
 @Controller
 @RequiredArgsConstructor
@@ -26,34 +24,37 @@ public class MemberController {
 
     // 1. 회원가입 페이지 보여주기 (GET) 했음~
     @GetMapping("/signup")
-    public String signupForm(org.springframework.ui.Model model) { // Model 임포트 대신 풀네임 썼음!
+    public String signupForm(Model model) {
+        // 💡 빈 회원 바구니를 만들어 보내야 에러 전광판이 작동함!!
         model.addAttribute("member", new Member());
         return "signup";
     }
 
-    // 2. [통합] 회원가입 처리 로직 (유효성 검사 + 이메일 인증) 했음~
+    // 2. [통합 완성본] 회원가입 처리 로직 (유효성 검사 + 보안 + 이메일 인증) 했음~ [cite: 2026-03-21]
+    // 💡 기존의 /api/members/add는 보안상 위험해서 삭제하고 이쪽으로 통합했음!! 했음~
     @PostMapping("/signup")
     public String register(@Valid @ModelAttribute("member") Member member, BindingResult result) {
         
-        // [검사] 이모티콘 빌런이나 글자 수 미달 컷!! 했음~
+        // [1단계: 심판 판정] 아이디/비번 규칙 어기면 바로 컷트!! 했음~ [cite: 2026-03-21]
         if (result.hasErrors()) {
-            return "signup";
+            return "signup"; // 에러 메시지 들고 다시 가입창으로 돌아감!! 했음~
         }
 
-        // [보안] 비밀번호 암호화 가즈아!! 했음~
+        // [2단계: 보안 강화] 비밀번호 암호화 가즈아!! 했음~
         member.setPassword(passwordEncoder.encode(member.getPassword()));
         
-        // [인증] 이메일 인증 코드 생성 및 계정 잠금 했음~
+        // [3단계: 인증 준비] 겹치지 않는 랜덤 코드 생성 및 계정 잠금 했음~ [cite: 2026-03-21]
         String code = UUID.randomUUID().toString();
         member.setVerificationCode(code);
-        member.setEnabled(false);
+        member.setEnabled(false); // 💡 인증 전까지는 로그인 못 함!!
         
-        // [저장] TiDB에 관원 등록!! 했음~
+        // [4단계: 저장] TiDB에 우리 관원 등록!! 했음~
         memberRepository.save(member);
         
-        // [발송] 진짜 메일 쏴주기!! 했음~
+        // [5단계: 발송] 입력한 메일로 진짜 인증 메일 쏴주기!! 했음~ [cite: 2026-01-11]
         mailService.sendVerificationEmail(member.getEmail(), code);
         
+        // 🚀 성공 시 로그인 화면으로 보내면서 안내 파라미터 던져줌!! 했음~
         return "redirect:/login?verifyEmail";
     }
 
@@ -63,38 +64,14 @@ public class MemberController {
         return "login";
     }
 
-    // 🏋️‍♂️ [핵심] 회원가입 처리 로직 (이메일 인증 버전!)
-    @PostMapping("/api/members/add")
-    public RedirectView addMember(@ModelAttribute Member member) {
-        
-        // 1. [기존 유지] 비밀번호 암호화 했음~ [cite: 2026-01-11]
-        member.setPassword(passwordEncoder.encode(member.getPassword()));
-        
-        // 2. ✨ [신규] 겹치지 않는 랜덤 인증 코드 생성 했음~ [cite: 2026-01-11]
-        String code = UUID.randomUUID().toString();
-        member.setVerificationCode(code);
-        
-        // 3. ✨ [신규] 계정 상태를 '잠금(false)'으로 설정! (인증 전까지 로그인 못 함!) 했음~
-        member.setEnabled(false);
-        
-        // 4. [기존 유지] DB에 저장 했음~ [cite: 2026-01-11]
-        memberRepository.save(member);
-        
-        // 5. ✨ [신규] 입력한 이메일로 인증 메일 발송!! 했음~ [cite: 2026-01-11]
-        mailService.sendVerificationEmail(member.getEmail(), code);
-        
-        // 6. 🚀 로그인 화면으로 보내면서 "메일 확인해봐!"라고 파라미터 던져줌! 했음~
-        return new RedirectView("/login?verifyEmail");
-    }
-
-    // ✨ [신규] 메일 링크 클릭 시 "계정 활성화" 시켜주는 주소!! 했음~ [cite: 2026-01-11]
+    // 4. ✨ [신규] 메일 링크 클릭 시 "계정 활성화" 시켜주는 주소!! 했음~ [cite: 2026-01-11]
     @GetMapping("/verify")
     public String verifyMember(@RequestParam("code") String code) {
         // 코드로 유저를 찾아서 있으면 enabled를 true로 바꾸고 살려줌! 했음~
         Member member = memberRepository.findByVerificationCode(code);
         if (member != null) {
             member.setEnabled(true);
-            member.setVerificationCode(null); // 코드는 한 번 쓰면 버려야지!
+            member.setVerificationCode(null); // 코드는 일회용이니 삭제!! 했음~
             memberRepository.save(member);
             return "redirect:/login?verified";
         }
